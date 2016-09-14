@@ -35,18 +35,19 @@ logger.setLevel('debug');
 
 function catalogueMaxQuery(){
   return new Promise(function(resolve,reject){
-    let catalogueMaxQueryString = `select max(catalogue) searchDayLong from test.flightsdata where depAirport = 'ZUH' and arrAirport = 'PVG'`;
+    let catalogueMaxQueryString = `select max(catalogue) from test.flightsdata where depAirport = 'ZUH' and arrAirport = 'PVG'`;
     connection.query(catalogueMaxQueryString, function(err, rows, fields) {
       if (err) throw err;
-      resolve(rows)
+      let catalogue = rows[0]['max(catalogue)']
+      resolve(catalogue)
     });
   })
 }
 
 
-function distinctFlightsQuery (){
+function distinctFlightsQuery (catalogue){
   return new Promise(function(resolve, reject){
-    let distinctFlightsQueryString = `SELECT distinct airlineCode, flightNo from test.flightsdata where depAirport = 'ZUH' and  arrAirport = 'PVG' order by depDate, depDateTime`;
+    let distinctFlightsQueryString = `SELECT distinct airlineCode, flightNo from test.flightsdata where depAirport = 'ZUH' and  arrAirport = 'PVG' and catalogue = '${catalogue}' order by depDate, depDateTime`;
     connection.query(distinctFlightsQueryString, function(err, rows, fields) {
       if (err) throw err;
       logger.debug(rows)
@@ -66,9 +67,12 @@ function longPriceQuery (){
 
 app.get('/api/', function (req, res) {
   catalogueMaxQuery()
-  .then(function(result){
-    logger.debug(result)
-    res.send('hi');
+  .then(function(catalogue){
+    return distinctFlightsQuery(catalogue)
+  })
+  .then(function(rows){
+    logger.debug(rows)
+    res.send(rows);
   })
 });
 
