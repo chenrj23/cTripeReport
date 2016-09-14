@@ -68,7 +68,7 @@ app.get('/api/', function (req, res) {
   catalogueMaxQuery()
   .then(function(result){
     logger.debug(result)
-    res.send('hu');
+    res.send('hi');
   })
 });
 
