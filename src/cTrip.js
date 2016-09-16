@@ -5,10 +5,10 @@ const moment = require('moment');
 const log4js = require('log4js');
 const mysql      = require('mysql');
 const connection = mysql.createConnection({
-  host     : 'localhost',
+  host     : '127.0.0.1',
   user     : 'root',
-  password : 'ecm.361',
-  database : 'test',
+  password : 'chenrj23',
+  database : 'cTrip',
 });
 
 program
@@ -40,16 +40,22 @@ let loggerFile = log4js.getLogger('fileLog');
 let errHead = `${deptDate} from ${deptAirportCode} to ${arrAirportCode} `
 // logger.debug(errHead)
 logger.setLevel('debug');
+logger.debug(queryCount)
 
 charset(request);                            // this will add request.Request.prototype.charset
                                              // fix the superagent decode form gbk data
-connection.connect(function(err) {
-  if (err) {
-    logger.error('error connecting: ' + err.stack);
-    return;
-  }
-  logger.info('connected as id ' + connection.threadId);
-});
+
+function connectMysql(){
+
+  connection.connect(function(err) {
+    if (err) {
+      logger.error('error connecting: ' + err.stack);
+      return;
+    }
+    logger.info('connected as id ' + connection.threadId);
+  });
+
+}
 
 
 function setSearchParam(deptDate, deptAirportCode, arrAirportCode) {
@@ -58,6 +64,9 @@ function setSearchParam(deptDate, deptAirportCode, arrAirportCode) {
 }
 
 function filter(resJson){
+  if (resJson.Error) {
+    loggerFile.error(resJson.Error)
+  }
   let flightDataArrays = resJson.fis;
   // console.log(resJson);
   let filteredData =  flightDataArrays.map(function(flightData){
@@ -134,9 +143,14 @@ function filter(resJson){
   // logger.debug(filteredData)
 
   connection.query('INSERT INTO flightsdata (airlineCode,flightNo,depDate,depDateTime,price,depAirport,arrAirport,fType,isShare,shareFlight,isStopover,stopoverCity,isCombinedTransport,combinedTransport,catalogue) VALUES ?',[filteredData], function(err, result) {
-    if (err) throw err;
+    if (err) {
+      // loggerFile.error(err)
+      // loggerFile.error('INSERT INTO flightsdata (airlineCode,flightNo,depDate,depDateTime,price,depAirport,arrAirport,fType,isShare,shareFlight,isStopover,stopoverCity,isCombinedTransport,combinedTransport,catalogue) VALUES ?')
+      // loggerFile.error([filteredData])
+      throw err;
+    }
     queryCount--;
-    logger.debug(queryCount)
+    logger.debug('query count is: ', queryCount)
     logger.debug('query is start', result)
     if (queryCount <= 0 ) {
       connection.end();
@@ -172,18 +186,19 @@ function reqCTrip(deptDate, deptAirportCode, arrAirportCode, errCount = requsetA
 // reqCTrip(deptDate, deptAirportCode, arrAirportCode)
 
 
-if (searchDayLong === '1') {
-  reqCTrip(deptDate, deptAirportCode, arrAirportCode);
-}else {
-  for (let i = 0; i < searchDayLong; i++) {
-    let deptDateAdded = moment(deptDate).add(i, 'days').format('YYYY-MM-DD');
-    reqCTrip(deptDateAdded, deptAirportCode, arrAirportCode);
-    // timeParams.push(timeParam)
+function search(){
+  if (searchDayLong === '1') {
+    connectMysql();
+    reqCTrip(deptDate, deptAirportCode, arrAirportCode);
+  }else {
+    connectMysql();
+    for (let i = 0; i < searchDayLong; i++) {
+      let deptDateAdded = moment(deptDate).add(i, 'days').format('YYYY-MM-DD');
+      reqCTrip(deptDateAdded, deptAirportCode, arrAirportCode);
+      // timeParams.push(timeParam)
+    }
   }
 }
 
-
-
-
-// search();
-// setInterval(search, 600000)
+search();
+setInterval(search, 600000)

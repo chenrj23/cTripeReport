@@ -1,0 +1,17 @@
+html
+  head
+    title!= 'longPriceQuery'
+  body
+    table(border='1')
+      tr
+        th(rowspan=longPrice.length+1)!=routes
+        th 航班号
+        th 时刻
+        each time in depDates
+          th!=time.slice(5)
+      each airlinePrice in longPrice
+        tr
+          th!=airlinePrice.airline 
+          th!=airlinePrice.depDateTime 
+          each depDatePrice in airlinePrice.prices
+            td!=depDatePrice.price
