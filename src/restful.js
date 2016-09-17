@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const log4js = require('log4js');
 const mysql      = require('mysql');
+const path = require('path');
 const connection = mysql.createConnection({
   host     : 'localhost',
   user     : 'root',
@@ -11,6 +12,7 @@ const connection = mysql.createConnection({
 
 app.set('views', '../views')
 app.set('view engine', 'pug')
+app.use('/', express.static(path.join(__dirname, '../public')));
 
 connection.connect(function(err) {
   if (err) {
@@ -55,14 +57,18 @@ function catalogueMaxQuery(depAirport, arrAirport){
 
 function distinctFlightsQuery (result){
   return new Promise(function(resolve, reject){
-    let distinctFlightsQueryString = `SELECT distinct airlineCode, flightNo , depDateTime from flightsdata where depAirport = '${result.depAirport}' and  arrAirport = '${result.arrAirport}' and catalogue = '${result.catalogue}' order by depDate, depDateTime`;
+    let distinctFlightsQueryString = `SELECT distinct airlineCode, flightNo , depDateTime from flightsdata where depAirport = '${result.depAirport}' and  arrAirport = '${result.arrAirport}' and catalogue = '${result.catalogue}' order by  depDateTime`;
     connection.query(distinctFlightsQueryString, function(err, rows, fields) {
       if (err) throw err;
-      let flights = rows.map(function(item, index){
-        return {flightID: item.airlineCode +　item.flightNo,
-                depDateTime: item.depDateTime,
-        }
-      })
+      let flights = [];
+      for (let flight of rows) {
+        flights.push(
+          {flightID: flight.airlineCode +　flight.flightNo,
+            depDateTime: flight.depDateTime,
+          }
+        )
+      }
+
       // logger.debug(rows)
       result.routes = `${result.depAirport}${result.arrAirport}`;
       result.flights = flights;
@@ -96,7 +102,8 @@ function longPriceQuery (result){
     let queryString = `select concat(airlineCode, flightNo) flight, depDate, depDateTime, price from flightsdata where depAirport = '${result.depAirport}' and arrAirport = '${result.arrAirport}' and catalogue = '${result.catalogue}' order by depDate, depDateTime`
     connection.query(queryString, function(err, rows, fields) {
       if (err) throw err;
-      result.longPrice = result.flights.map(function(flight){
+      let longPrices = [];
+      for (let flight of result.flights) {
         let longPrice = {
           airline: flight.flightID,
           depDateTime: flight.depDateTime,
@@ -113,21 +120,21 @@ function longPriceQuery (result){
           }else {
             longPrice.prices.push({
               depDate: time,
-              price: 'null',
+              price: '  ',
             })
           }
         }
-        return longPrice
-      })
-
+        longPrices.push(longPrice)
+      }
+      result.longPrice = longPrices
       resolve(result)
     });
   })
 }
 
-app.get('/', function (req, res) {
-  res.render('index', { title: 'Hey', message: 'Hello there!'});
-})
+// app.get('/', function (req, res) {
+//       res.send('hi');
+// })
 
 app.get('/api/', function (req, res) {
   let depAirport = req.query.depAirport
