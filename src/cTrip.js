@@ -77,6 +77,7 @@ function filter(resJson, deptDate, deptAirportCode, arrAirportCode) {
     if (resJson.Error) {
         loggerFile.error(deptAirportCode, arrAirportCode, deptDate, 'request error!')
         loggerFile.error(resJson.Error)
+
         return
     }
     let flightDataArrays = resJson.fis;
@@ -84,7 +85,9 @@ function filter(resJson, deptDate, deptAirportCode, arrAirportCode) {
     let filteredData = flightDataArrays.map(function(flightData) {
             let flightNo,
                 airlineCode,
+                depCity,
                 depAirport,
+                arrCity,
                 arrAirport,
                 depDate,
                 depDateTime,
@@ -100,7 +103,9 @@ function filter(resJson, deptDate, deptAirportCode, arrAirportCode) {
                 combinedTransport = 'none';
 
             flightNo = flightData.fn;
+            depCity = flightData.dcc;
             depAirport = flightData.dpc;
+            arrCity = flightData.acc;
             arrAirport = flightData.apc;
             fType = flightData.cf.c;
             depDateTime = flightData.dt;
@@ -133,7 +138,9 @@ function filter(resJson, deptDate, deptAirportCode, arrAirportCode) {
                 depDate: depDateTime.slice(0, 10),
                 depDateTime: depDateTime.slice(11),
                 price: price,
+                depCity: depCity,
                 depAirport: depAirport,
+                arrCity: arrCity,
                 arrAirport: arrAirport,
                 fType: fType,
                 isShare: isShare,
@@ -154,7 +161,7 @@ function filter(resJson, deptDate, deptAirportCode, arrAirportCode) {
         })
         // logger.debug(filteredData)
 
-    connection.query('INSERT INTO flightsdata (airlineCode,flightNo,depDate,depDateTime,price,depAirport,arrAirport,fType,isShare,shareFlight,isStopover,stopoverCity,isCombinedTransport,combinedTransport,catalogue) VALUES ?', [filteredData], function(err, result) {
+    connection.query('INSERT INTO flightsdata (airlineCode,flightNo,depDate,depDateTime,price,depCity,depAirport,arrCity,arrAirport,fType,isShare,shareFlight,isStopover,stopoverCity,isCombinedTransport,combinedTransport,catalogue) VALUES ?', [filteredData], function(err, result) {
         if (err) {
             // loggerFile.error(err)
             // loggerFile.error('INSERT INTO flightsdata (airlineCode,flightNo,depDate,depDateTime,price,depAirport,arrAirport,fType,isShare,shareFlight,isStopover,stopoverCity,isCombinedTransport,combinedTransport,catalogue) VALUES ?')
@@ -171,13 +178,14 @@ function filter(resJson, deptDate, deptAirportCode, arrAirportCode) {
     });
 }
 
-function reqCTrip(deptDate, deptAirportCode, arrAirportCode, errCount = requsetAgain) {
+function reqCTrip(deptDate, deptAirportCode, arrAirportCode,errCount = requsetAgain) {
     logger.info(deptDate, deptAirportCode, arrAirportCode,"resquest start")
     let errHead = `${deptDate} from ${deptAirportCode} to ${arrAirportCode} `
     let searchParam = setSearchParam(deptDate, deptAirportCode, arrAirportCode);
     // logger.info(errCount)
     request
         .get(searchParam)
+        // .proxy(proxy)
         .charset('gbk')
         .timeout(10000)
         .end(function(err, res) {
@@ -202,6 +210,7 @@ function reqCTrip(deptDate, deptAirportCode, arrAirportCode, errCount = requsetA
 
 
 function search(deptDate, deptAirportCode, arrAirportCode, searchDayLong) {
+    // const catalogue = (new Date).getTime()
     if (searchDayLong === '1') {
         reqCTrip(deptDate, deptAirportCode, arrAirportCode);
     } else {
@@ -230,5 +239,5 @@ if (searchDefault) {
     }
 }
 
-// search(deptDate, deptAirportCode, arrAirportCode, searchDayLong);
+search(deptDate, deptAirportCode, arrAirportCode, searchDayLong);
 // setInterval(search, 10000)

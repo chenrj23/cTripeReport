@@ -93,7 +93,7 @@ function distinctDepDateQuery(result){
 
 function findTime(time, flightID){
   return function(flight){
-    return flight.depDate == time && flight.flight == flightID
+    return flight.depDateTime == time && flight.flight == flightID
   }
 }
 
@@ -103,27 +103,21 @@ function longPriceQuery (result){
     connection.query(queryString, function(err, rows, fields) {
       if (err) throw err;
       let longPrices = [];
+      //
       for (let flight of result.flights) {
+        let findTheTime = findTime(flight.depDateTime, flight.flightID);
+        let filteredFlights = rows.filter(findTheTime)
         let longPrice = {
-          airline: flight.flightID,
-          depDateTime: flight.depDateTime,
-          prices: [],
+          flight: flight.flightID,
+          depTime: flight.depDateTime,
         }
-        for (let time of result.depDates) {
-          let findTheTime = findTime(time, flight.flightID);
-          let depDataFlight = rows.find(findTheTime)
-          if (depDataFlight) {
-            longPrice.prices.push({
-              depDate: time,
-              price: depDataFlight.price,
-            })
-          }else {
-            longPrice.prices.push({
-              depDate: time,
-              price: '  ',
-            })
-          }
+        // console.log(filteredFlight);
+        for (let  filteredFlight of filteredFlights) {
+          let depDate = filteredFlight.depDate.slice(5)
+          longPrice[depDate] = filteredFlight.price
         }
+        longPrice.key = longPrice.flight + longPrice.depTime
+
         longPrices.push(longPrice)
       }
       result.longPrice = longPrices
@@ -132,9 +126,36 @@ function longPriceQuery (result){
   })
 }
 
-// app.get('/', function (req, res) {
-//       res.send('hi');
-// })
+
+app.all('*', function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");
+    res.header("X-Powered-By",' 3.2.1')
+    res.header("Content-Type", "application/json;charset=utf-8");
+    next();
+});
+
+
+app.get('/', function (req, res) {
+      let depAirport = req.query.depAirport
+      let arrAirport = req.query.arrAirport
+      catalogueMaxQuery(depAirport, arrAirport)
+      .then(function(result){
+        return distinctFlightsQuery(result)
+      })
+      .then(function(result){
+        return distinctDepDateQuery(result)
+      })
+      .then(function(result){
+        return longPriceQuery(result)
+      })
+      .then(function(result){
+        // logger.debug(rows)
+        res.render('index', result);
+        // res.send(result);
+      })
+})
 
 app.get('/api/', function (req, res) {
   let depAirport = req.query.depAirport
@@ -151,8 +172,10 @@ app.get('/api/', function (req, res) {
   })
   .then(function(result){
     // logger.debug(rows)
-    res.render('index', result);
-    // res.send(result);
+    // res.render('index', result);
+    // res.header("Access-Control-Allow-Origin", "*");
+
+    res.send(result);
   })
 });
 
