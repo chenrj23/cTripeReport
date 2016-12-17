@@ -1,10 +1,11 @@
 html
   head
-    title!= routes
+    title!= route
     script(src="../bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous")
     link(rel="stylesheet" href="../bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous")
   body
     .container-fluid
       .row
         .col-lg-10.col-md-10
-          include ./table.pug
+          each flightPrice in flightsPrice
+            include ./table.pug

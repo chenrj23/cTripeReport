@@ -4,15 +4,32 @@ const log4js = require('log4js');
 const mysql      = require('mysql');
 const path = require('path');
 const connection = mysql.createConnection({
-  host     : 'localhost',
+  host     : '120.27.5.155',
   user     : 'root',
-  password : 'chenrj23',
+  password : '',
   database : 'cTrip',
+});
+
+const pool  = mysql.createPool({
+  connectionLimit : 10,
+  host            : '120.27.5.155',
+  user            : 'root',
+  password        : '',
+  database        : 'cTrip'
 });
 
 app.set('views', '../views')
 app.set('view engine', 'pug')
 app.use('/', express.static(path.join(__dirname, '../public')));
+
+// app.all('*', function(req, res, next) {
+//     res.header("Access-Control-Allow-Origin", "*");
+//     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+//     res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");
+//     res.header("X-Powered-By",' 3.2.1')
+//     res.header("Content-Type", "application/json;charset=utf-8");
+//     next();
+// });
 
 connection.connect(function(err) {
   if (err) {
@@ -41,13 +58,30 @@ logger.setLevel('debug');
 function catalogueMaxQuery(depAirport, arrAirport){
   return new Promise(function(resolve,reject){
     let catalogueMaxQueryString = `select max(catalogue) from flightsdata where depAirport = '${depAirport}' and arrAirport = '${arrAirport}'`;
-    connection.query(catalogueMaxQueryString, function(err, rows, fields) {
+    pool.query(catalogueMaxQueryString, function(err, rows, fields) {
       if (err) throw err;
       let catalogue = rows[0]['max(catalogue)']
       let result = {
         depAirport: depAirport,
         arrAirport: arrAirport,
         catalogue: catalogue,
+        formatedCatalogue: Date(catalogue),
+      }
+      resolve(result)
+    });
+  })
+}
+function catalogueMaxQueryByCity(depCity, arrCity){
+  return new Promise(function(resolve,reject){
+    let catalogueMaxQueryString = `select max(catalogue) from flightsdata where depCity = '${depCity}' and arrCity = '${arrCity}'`;
+    pool.query(catalogueMaxQueryString, function(err, rows, fields) {
+      if (err) throw err;
+      let catalogue = rows[0]['max(catalogue)']
+      let result = {
+        depCity: depCity,
+        arrCity: arrCity,
+        catalogue: catalogue,
+        formatedCatalogue: (new Date(parseInt(catalogue))),
       }
       resolve(result)
     });
@@ -58,7 +92,7 @@ function catalogueMaxQuery(depAirport, arrAirport){
 function distinctFlightsQuery (result){
   return new Promise(function(resolve, reject){
     let distinctFlightsQueryString = `SELECT distinct airlineCode, flightNo , depDateTime from flightsdata where depAirport = '${result.depAirport}' and  arrAirport = '${result.arrAirport}' and catalogue = '${result.catalogue}' order by  depDateTime`;
-    connection.query(distinctFlightsQueryString, function(err, rows, fields) {
+    pool.query(distinctFlightsQueryString, function(err, rows, fields) {
       if (err) throw err;
       let flights = [];
       for (let flight of rows) {
@@ -70,7 +104,29 @@ function distinctFlightsQuery (result){
       }
 
       // logger.debug(rows)
-      result.routes = `${result.depAirport}${result.arrAirport}`;
+      result.route = `${result.depAirport}${result.arrAirport}`;
+      result.route = result.route.toUpperCase();
+      result.flights = flights;
+      resolve(result)
+    });
+  })
+}
+function distinctFlightsQueryByCity (result){
+  return new Promise(function(resolve, reject){
+    let distinctFlightsQueryString = `SELECT distinct airlineCode, flightNo , depDateTime from flightsdata where depCity = '${result.depCity}' and  arrCity = '${result.arrCity}' and catalogue = '${result.catalogue}' and isShare='0'  order by  depDateTime`;
+    pool.query(distinctFlightsQueryString, function(err, rows, fields) {
+      if (err) throw err;
+      let flights = [];
+      for (let flight of rows) {
+        flights.push(
+          {flightID: flight.airlineCode +　flight.flightNo,
+            depDateTime: flight.depDateTime,
+          }
+        )
+      }
+
+      result.route = `${result.depCity}${result.arrCity}`;
+      result.route = result.route.toUpperCase();
       result.flights = flights;
       resolve(result)
     });
@@ -80,7 +136,20 @@ function distinctFlightsQuery (result){
 function distinctDepDateQuery(result){
   return new Promise(function(resolve, reject){
     let distinctDepDateQueryString = `select distinct(depDate) from flightsdata where arrAirport = '${result.arrAirport}' and depAirport = '${result.depAirport}' and catalogue = '${result.catalogue}' order by depDate`
-    connection.query(distinctDepDateQueryString, function(err, rows, fields) {
+    pool.query(distinctDepDateQueryString, function(err, rows, fields) {
+      if (err) throw err;
+      let times = rows.map(function(item, index){
+        return item.depDate
+      })
+      result.depDates = times
+      resolve(result)
+    });
+  })
+}
+function distinctDepDateQueryByCity(result){
+  return new Promise(function(resolve, reject){
+    let distinctDepDateQueryString = `select distinct(depDate) from flightsdata where depCity = '${result.depCity}' and  arrCity = '${result.arrCity}'and catalogue = '${result.catalogue}' order by depDate`
+    pool.query(distinctDepDateQueryString, function(err, rows, fields) {
       if (err) throw err;
       let times = rows.map(function(item, index){
         return item.depDate
@@ -91,33 +160,96 @@ function distinctDepDateQuery(result){
   })
 }
 
-function findTime(time, flightID){
+function findTime(time, flightID, depDateTime){
   return function(flight){
-    return flight.depDateTime == time && flight.flight == flightID
+    return flight.depDate == time && flight.flight == flightID && flight.depDateTime == depDateTime
   }
 }
 
 function longPriceQuery (result){
   return new Promise(function(resolve, reject){
     let queryString = `select concat(airlineCode, flightNo) flight, depDate, depDateTime, price from flightsdata where depAirport = '${result.depAirport}' and arrAirport = '${result.arrAirport}' and catalogue = '${result.catalogue}' order by depDate, depDateTime`
-    connection.query(queryString, function(err, rows, fields) {
+    pool.query(queryString, function(err, rows, fields) {
       if (err) throw err;
       let longPrices = [];
-      //
       for (let flight of result.flights) {
-        let findTheTime = findTime(flight.depDateTime, flight.flightID);
-        let filteredFlights = rows.filter(findTheTime)
         let longPrice = {
-          flight: flight.flightID,
-          depTime: flight.depDateTime,
+          airline: flight.flightID,
+          depDateTime: flight.depDateTime,
+          prices: [],
         }
-        // console.log(filteredFlight);
-        for (let  filteredFlight of filteredFlights) {
-          let depDate = filteredFlight.depDate.slice(5)
-          longPrice[depDate] = filteredFlight.price
+        for (let time of result.depDates) {
+          let findTheTime = findTime(time, flight.flightID, flight.depDateTime);
+          let depDataFlight = rows.find(findTheTime)
+          if (depDataFlight) {
+            longPrice.prices.push({
+              depDate: time,
+              price: depDataFlight.price,
+            })
+          }else {
+            longPrice.prices.push({
+              depDate: time,
+              price: '  ',
+            })
+          }
         }
-        longPrice.key = longPrice.flight + longPrice.depTime
+        longPrices.push(longPrice)
+      }
+      result.longPrice = longPrices
+      resolve(result)
+    });
+  })
+}
+function longPriceQueryByCity (result){
+  return new Promise(function(resolve, reject){
+    let queryString = `select concat(airlineCode, flightNo) flight, depDate, depDateTime, price from flightsdata where depCity = '${result.depCity}' and  arrCity = '${result.arrCity}' and catalogue = '${result.catalogue}' order by depDate, depDateTime`
+    pool.query(queryString, function(err, rows, fields) {
+      if (err) throw err;
+      let longPrices = [];
 
+      result.Dows = ['', 'DOW:'];
+      for (var i = 0; i < result.depDates.length; i++) {
+        let depDate = result.depDates[i];
+        let dow = new Date(depDate).getDay();
+        if (dow === 0) {
+          dow = 7
+        }
+        result.Dows.push(dow)
+      }
+
+      result.advancedDates = ['', '提前数:'];
+      let NowDate = new Date(result.depDates[0])
+      for (var i = 0; i < result.depDates.length; i++) {
+        let depDate = new Date(result.depDates[i]);
+        let advancedDate = (depDate - NowDate)/86400000;
+        result.advancedDates.push(advancedDate)
+      }
+
+
+      for (let flight of result.flights) {
+        let longPrice = {
+          airline: flight.flightID,
+          depDateTime: flight.depDateTime,
+          // Dow: ['', ''],
+          // advancedDate:['', '']
+          prices: [],
+        }
+
+        for (let time of result.depDates) {
+          let findTheTime = findTime(time, flight.flightID, flight.depDateTime);
+          let depDataFlight = rows.find(findTheTime)
+          if (depDataFlight) {
+            longPrice.prices.push({
+              depDate: time,
+              price: depDataFlight.price,
+            })
+          }else {
+            longPrice.prices.push({
+              depDate: time,
+              price: '  ',
+            })
+          }
+        }
         longPrices.push(longPrice)
       }
       result.longPrice = longPrices
@@ -126,58 +258,114 @@ function longPriceQuery (result){
   })
 }
 
+function findRoute(depAirport, arrAirport){
+  let route = depAirport + arrAirport;
+  route = route.toUpperCase()
+  logger.debug("route is ", route)
+  return function (flightPrice) {
+    logger.debug("flightPrice route is ", flightPrice.route)
+    return flightPrice.route == route
+  }
+}
 
-app.all('*', function(req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");
-    res.header("X-Powered-By",' 3.2.1')
-    res.header("Content-Type", "application/json;charset=utf-8");
-    next();
+// app.get('/', function (req, res) {
+//       res.send('hi');
+// })
+
+// app.get('/api/', function (req, res) {
+//   logger.info('have a req')
+//   let depAirport = req.query.depAirport
+//   let arrAirport = req.query.arrAirport
+//   catalogueMaxQuery(depAirport, arrAirport)
+//   .then(function(result){
+//     return distinctFlightsQuery(result)
+//   })
+//   .then(function(result){
+//     return distinctDepDateQuery(result)
+//   })
+//   .then(function(result){
+//     return longPriceQuery(result)
+//   })
+//   .then(function(result){
+//     // logger.debug(rows)
+//     // logger.debug(result)
+//     res.render('index', result);
+//     // res.send(result);
+//   })
+// });
+
+app.get('/api/byCity', function (req, res) {
+  let depCity = req.query.depCity
+  let arrCity = req.query.arrCity
+  let timeStart = new Date()
+  logger.info('have a req from ', depCity, ' to ', arrCity)
+  queryLongPriceByCity(depCity, arrCity)
+    .then(function(result){
+      let timeUsed = new Date() - timeStart
+      logger.info('Time use :', timeUsed)
+      res.render('index', result)
+    })
 });
 
+app.get('/api/byCityStopOver', function (req, res) {
+  let depCity = req.query.depCity
+  let stopOverCity = req.query.stopOverCity
+  let arrCity = req.query.arrCity
+  let firstShortFlight = queryLongPriceByCity(depCity, stopOverCity)
+  let secondShortFlight = queryLongPriceByCity(stopOverCity, arrCity)
+  let longFlight = queryLongPriceByCity(depCity, arrCity)
+  let timeStart = new Date()
+  logger.info('have a req StopOver from ', depCity, ' to ', stopOverCity , ' to ', arrCity)
+  Promise.all([firstShortFlight, secondShortFlight, longFlight]).then(function(flightsPrice){
+    let data = {};
+    data.flightsPrice = []
 
-app.get('/', function (req, res) {
-      let depAirport = req.query.depAirport
-      let arrAirport = req.query.arrAirport
-      catalogueMaxQuery(depAirport, arrAirport)
-      .then(function(result){
-        return distinctFlightsQuery(result)
-      })
-      .then(function(result){
-        return distinctDepDateQuery(result)
-      })
-      .then(function(result){
-        return longPriceQuery(result)
-      })
-      .then(function(result){
-        // logger.debug(rows)
-        res.render('index', result);
-        // res.send(result);
-      })
-})
+    let findFirstShortFlight = findRoute(depCity, stopOverCity)
+    let findSecondShortFlight = findRoute(stopOverCity, arrCity)
+    let findLongFlight = findRoute(depCity, arrCity)
 
-app.get('/api/', function (req, res) {
-  let depAirport = req.query.depAirport
-  let arrAirport = req.query.arrAirport
-  catalogueMaxQuery(depAirport, arrAirport)
-  .then(function(result){
-    return distinctFlightsQuery(result)
-  })
-  .then(function(result){
-    return distinctDepDateQuery(result)
-  })
-  .then(function(result){
-    return longPriceQuery(result)
-  })
-  .then(function(result){
-    // logger.debug(rows)
-    // res.render('index', result);
-    // res.header("Access-Control-Allow-Origin", "*");
+    let FirstShortFlightArrNumber = flightsPrice.findIndex(findFirstShortFlight)
+    let SecondShortFlightArrNumber = flightsPrice.findIndex(findSecondShortFlight)
+    let LongFlightArrNumber = flightsPrice.findIndex(findLongFlight)
 
-    res.send(result);
+    console.log(FirstShortFlightArrNumber);
+    console.log(SecondShortFlightArrNumber);
+    console.log(LongFlightArrNumber);
+
+    data.flightsPrice[0] = flightsPrice[FirstShortFlightArrNumber];
+    data.flightsPrice[1] = flightsPrice[LongFlightArrNumber];
+    data.flightsPrice[2] = flightsPrice[SecondShortFlightArrNumber];
+
+    data.route =  depCity +　'-' + stopOverCity　+ '-' + arrCity;
+    // date.route = data.route.toUpperCase() ;
+    let timeUsed = new Date() - timeStart
+    logger.info('Time use :', timeUsed)
+    res.render('byCityStopOver', data)
+    // res.send(data)
   })
 });
+
+function queryLongPriceByCity(depCity, arrCity){
+  return new Promise(function(resolve, reject){
+    catalogueMaxQueryByCity(depCity, arrCity)
+    .then(function(result){
+      return distinctFlightsQueryByCity(result)
+    })
+    .then(function(result){
+      return distinctDepDateQueryByCity(result)
+    })
+    .then(function(result){
+      return longPriceQueryByCity(result)
+    })
+    .then(function(result){
+      // logger.debug(rows)
+      // logger.debug(result)
+      logger.info('lt is ok ', depCity, ' to ', arrCity)
+      resolve(result)
+    })
+  })
+}
+
 
 app.listen(3000, function () {
   console.log('Example app listening on port 3000!');

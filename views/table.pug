@@ -1,0 +1,27 @@
+table.table.table-bordered.table-condensed.table-hover
+  tr
+    th(rowspan=flightPrice.longPrice.length+5)!=flightPrice.route
+    th 航班号
+    th 时刻
+    each time in flightPrice.depDates
+      th!=time.slice(5)
+  tr
+    each dow in flightPrice.Dows
+      th!=dow
+  tr
+    each advancedDate in flightPrice.advancedDates
+      th!=advancedDate
+  each airlinePrice in flightPrice.longPrice
+    - var isY8 = airlinePrice.airline.includes('Y8')
+    tr(class=isY8 ? 'danger' : '')
+      th!=airlinePrice.airline
+      th!=airlinePrice.depDateTime
+      each depDatePrice in airlinePrice.prices
+        td!=depDatePrice.price
+  tr
+    each advancedDate in flightPrice.advancedDates
+      th!=advancedDate
+  tr
+    each dow in flightPrice.Dows
+      th!=dow
+p=flightPrice.formatedCatalogue
