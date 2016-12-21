@@ -6,7 +6,7 @@ const path = require('path');
 const connection = mysql.createConnection({
   host     : '120.27.5.155',
   user     : 'root',
-  password : '',
+  password : 'y8kyscsy',
   database : 'cTrip',
 });
 
@@ -14,7 +14,7 @@ const pool  = mysql.createPool({
   connectionLimit : 10,
   host            : '120.27.5.155',
   user            : 'root',
-  password        : '',
+  password        : 'y8kyscsy',
   database        : 'cTrip'
 });
 
