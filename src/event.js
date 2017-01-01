@@ -4,6 +4,7 @@ const charset = require('superagent-charset');
 charset(request);
 const log4js = require('log4js');
 const mysql = require('mysql');
+const net = require('net'); 
 
 const pool  = mysql.createPool({
   connectionLimit : 10,

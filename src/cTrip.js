@@ -8,7 +8,7 @@ const mysql = require('mysql');
 const connection = mysql.createConnection({
     host: '120.27.5.155',
     user: 'root',
-    password: '',
+    password: 'y8kyscsy',
     database: 'cTrip',
 });
 
@@ -16,7 +16,7 @@ const pool  = mysql.createPool({
   connectionLimit : 10,
   host            : '120.27.5.155',
   user            : 'root',
-  password        : '',
+  password        : 'y8kyscsy',
   database        : 'cTrip'
 });
 
@@ -25,13 +25,13 @@ const pool  = mysql.createPool({
 // require('superagent-proxy')(request);
 let proxy = 'http://218.106.205.145:8080';
 let catalogue = (new Date).getTime();
-const collection = ['PVGHRB', 'HRBPVG', 'PVGKWL', 'KWLPVG', 'SYXPVG', 'PVGSYX', 'PVGKWE', 'KWEPVG', 'KWEWNZ', 'WNZKWE', 'PVGZUH', 'ZUHPVG', 'ZUHCGO', 'CGOZUH', 'CGOHAK', 'HAKCGO', 'WNZHAK', 'HAKWNZ', 'ZUHTNA', 'TNAZUH', 'SZXTYN', 'TYNSZX', 'HETTYN', 'TYNHET', 'SZXHET', 'HETSZX']
+const collection = ['PVGHRB', 'HRBPVG', 'PVGKWL', 'KWLPVG', 'SYXPVG', 'PVGSYX', 'PVGKWE', 'KWEPVG', 'KWEWNZ', 'WNZKWE', 'PVGZUH', 'ZUHPVG', 'ZUHCGO', 'CGOZUH', 'CGOHAK', 'HAKCGO', 'WNZHAK', 'HAKWNZ', 'ZUHTNA', 'TNAZUH', 'SZXTYN', 'TYNSZX', 'HETTYN', 'TYNHET', 'SZXHET', 'HETSZX', 'szxxic', 'xicszx', 'xicmig', 'migxic', 'migtna', 'tnamig', 'szxmig', 'migszx', 'xictna', 'tnaxic', 'szxhld', 'hldszx', 'hethld', 'hldhet']
 
 program
     .version('0.0.1')
-    .option('-t, --deptDate <time>', 'seaching date like 2016-03-28')
-    .option('-d, --deptAirportCode <code>', 'depart airport code like SHA,PVG')
-    .option('-a, --arrAirportCode <code>', 'arrive airport code like BJS,PEK')
+    .option('-t, --depDate <time>', 'seaching date like 2016-03-28')
+    .option('-d, --depAirCode <code>', 'depart airport code like SHA,PVG')
+    .option('-a, --arrAirCode <code>', 'arrive airport code like BJS,PEK')
     .option('-l, --searchDayLong [number]', 'how many days search like 30')
     .option('-f, --searchDefault', 'searchDefault')
     .option('-i, --insist [times]', 'search auto')
@@ -39,14 +39,13 @@ program
     // .option('-b, --debug [level]', '')
     .parse(process.argv);
 
-const deptAirportCode = program.deptAirportCode || false,
-    arrAirportCode = program.arrAirportCode || false,
-    deptDate = program.deptDate || moment().format('YYYY-MM-DD'),
+const depAirCode = program.depAirCode || false,
+    arrAirCode = program.arrAirCode || false,
+    depDate = program.depDate || moment().format('YYYY-MM-DD'),
     searchDayLong = parseInt(program.searchDayLong) || 1,
     searchDefault = program.searchDefault || false,
     insist = program.insist || false,
     speed = parseInt(program.speed) || 2000;
-
 
 
 const requsetAgain = 3;
