@@ -1,0 +1,13 @@
+{
+    "appenders": [{
+        "type": "console",
+        "maxLogSize": 20480,
+        "backups": 3
+    }, {
+        "type": "file",
+        "filename": "../logs/cTrip.log",
+        "category": "fileLog",
+        "maxLogSize": 20480,
+        "backups": 3
+    }]
+}

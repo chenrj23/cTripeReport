@@ -1,5 +1,14 @@
 const net = require('net');
+const EventEmitter = require('events');
 const program = require('commander');
+const moment = require('moment');
+let catalogue = (new Date).getTime();
+
+const log4js = require('log4js');
+log4js.configure('../config/my_log4js_configuration.json')
+let logger = log4js.getLogger('console');
+let loggerFile = log4js.getLogger('fileLog'); //可以模块化
+logger.setLevel('debug');
 
 program
     .version('0.0.1')
@@ -21,20 +30,9 @@ const depAirCode = program.depAirCode || false,
     insist = program.insist || false,
     speed = parseInt(program.speed) || 2000;
 
-function taskBuild(depAirCode, arrAirCode, depDate, speed){
-  return {
-    depAirCode: depAirCode,
-    arrAirCode: arrAirCode,
-    depDate: depDate,
-    speed: speed
-  }
-}
-
 const client = net.createConnection({port: 8124}, () => {
   //'connect' listener
   console.log('connected to server!');
-  let task = taskBuild(depAirCode, arrAirCode, depDate, speed)
-  client.write(JSON.stringify(task));
 });
 client.on('data', (data) => {
   console.log(data.toString());
@@ -43,3 +41,29 @@ client.on('data', (data) => {
 client.on('end', () => {
   console.log('disconnected from server');
 });
+
+function taskBuild(depAirCode, arrAirCode, depDate, speed){
+  return {
+    depAirCode: depAirCode,
+    arrAirCode: arrAirCode,
+    depDate: depDate,
+    speed: speed,
+    catalogue: catalogue,
+  }
+}
+
+function search(depDate, depAirCode, arrAirCode, speed, searchDayLong) {
+    if (searchDayLong === 1) {
+      let task = taskBuild(depAirCode, arrAirCode, depDate, speed)
+      // logger.info('task', task);
+      client.write(JSON.stringify(task));
+    } else {
+        for (let i = 0; i < searchDayLong; i++) {
+            let deptDateAdded = moment(depDate).add(i, 'days').format('YYYY-MM-DD');
+            let task = taskBuild(depAirCode, arrAirCode, deptDateAdded, speed)
+            client.write(JSON.stringify(task));
+        }
+    }
+}
+
+search(depDate, depAirCode, arrAirCode, speed, searchDayLong)
