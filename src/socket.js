@@ -12,7 +12,6 @@ let logger = log4js.getLogger('console');
 let loggerFile = log4js.getLogger('fileLog'); //可以模块化
 logger.setLevel('debug');
 
-
 let catalogue = (new Date).getTime();
 
 program
@@ -27,7 +26,6 @@ program
     // .option('-b, --debug [level]', '')
     .parse(process.argv);
 
-const depAirCode = program.depAirCode || false,
     arrAirCode = program.arrAirCode || false,
     depDate = program.depDate || moment().format('YYYY-MM-DD'),
     searchDayLong = parseInt(program.searchDayLong) || 1,
@@ -44,14 +42,20 @@ function TaskControl(tasks){
 }
 
 TaskControl.prototype.tasksEmit = function(speed){
-  while (this.tasks.length > 0) {
+  if (this.tasks.length > 0) {
+    logger.info('tasksEmit')
     let oneTask = this.tasks.shift()
     setTimeout(()=>myEmitter.emit('request', oneTask), oneTask.speed)
+  }else {
+    logger.info('no tasks')
   }
 }
+const task = new TaskControl();
 
 myEmitter.on('request', (oneTask) => {
   console.log("one task", oneTask);
+  console.log("tasks", task.tasks);
+
   let depDate = oneTask.depDate;
   let depAirCode = oneTask.depAirCode;
   let arrAirCode = oneTask.arrAirCode
@@ -61,7 +65,9 @@ myEmitter.on('request', (oneTask) => {
 
 const server = net.createServer((c) => {
   // 'connection' listener
-  console.log('client connected');
+  console.log('client connected')
+  let bufferString = '';
+  let tasksStack;
   c.on('end', () => {
     console.log('client disconnected');
   });
@@ -69,16 +75,29 @@ const server = net.createServer((c) => {
     console.log('client sconnected');
   });
   c.on('data', (data) => {
-    // console.log('client say');
-    console.log("tasks", task.tasks);
-    dataByString = data.toString()
-    dataByJson = JSON.parse(dataByString)
-    task.tasks.unshift(dataByJson)
-    task.tasksEmit()
+    let dataByString = data.toString()
+    bufferString += dataByString
+    let bufferArray = bufferString.split(/\r\n|\n|\r/)
+    if (bufferArray.length > 1) {
+      let bufferArrayFirst = bufferArray.shift()
+      try {
+        tasksStack = JSON.parse(bufferArrayFirst)
+
+      } catch (e) {
+        logger.error('JSON pares have err:', e)
+        logger.error('bufferArrayFirst', bufferArrayFirst)
+      }
+      bufferString = bufferArray.join('')
+      task.tasks = tasksStack.concat(task.tasks)
+      logger.debug('tasksStack', tasksStack);
+      logger.debug('task.tasks', task.tasks);
+      task.tasksEmit()
+    }
   });
   c.write('You are Welcome！\r\n');
   c.pipe(c);
 });
+
 server.on('error', (err) => {
   throw err;
 });
@@ -86,4 +105,4 @@ server.listen(8124, () => {
   console.log('server bound');
 });
 
-const task = new TaskControl();
+// const collection = ['PVGHRB', 'HRBPVG', 'PVGKWL', 'KWLPVG', 'SYXPVG', 'PVGSYX', 'PVGKWE', 'KWEPVG', 'KWEWNZ', 'WNZKWE', 'PVGZUH', 'ZUHPVG', 'ZUHCGO', 'CGOZUH', 'CGOHAK', 'HAKCGO', 'WNZHAK', 'HAKWNZ', 'ZUHTNA', 'TNAZUH', 'SZXTYN', 'TYNSZX', 'HETTYN', 'TYNHET', 'SZXHET', 'HETSZX', 'szxxic', 'xicszx', 'xicmig', 'migxic', 'migtna', 'tnamig', 'szxmig', 'migszx', 'xictna', 'tnaxic', 'szxhld', 'hldszx', 'hethld', 'hldhet']

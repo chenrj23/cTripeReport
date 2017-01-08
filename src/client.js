@@ -1,8 +1,9 @@
 const net = require('net');
+const fs = require('fs');
 const EventEmitter = require('events');
 const program = require('commander');
 const moment = require('moment');
-let catalogue = (new Date).getTime();
+
 
 const log4js = require('log4js');
 log4js.configure('../config/my_log4js_configuration.json')
@@ -31,39 +32,74 @@ const depAirCode = program.depAirCode || false,
     speed = parseInt(program.speed) || 2000;
 
 const client = net.createConnection({port: 8124}, () => {
-  //'connect' listener
+    //'connect' listener
   console.log('connected to server!');
-});
-client.on('data', (data) => {
-  console.log(data.toString());
-  client.end();
-});
-client.on('end', () => {
-  console.log('disconnected from server');
+  client.on('data', (data) => {
+    // console.log(data.toString());
+    // client.end();
+  });
+  client.on('end', () => {
+    console.log('disconnected from server');
+  });
 });
 
-function taskBuild(depAirCode, arrAirCode, depDate, speed){
-  return {
-    depAirCode: depAirCode,
-    arrAirCode: arrAirCode,
-    depDate: depDate,
-    speed: speed,
-    catalogue: catalogue,
+
+function tasksBuild(depAirCode, arrAirCode, depDate, speed, searchDayLong, catalogue){
+  if (searchDayLong === 1) {
+      return [{
+        depAirCode: depAirCode,
+        arrAirCode: arrAirCode,
+        depDate: depDate,
+        speed: speed,
+        catalogue: catalogue,
+      }]
+  }else {
+    let tasks = []
+    for (let i = 0; i < searchDayLong; i++) {
+      let deptDateAdded = moment(depDate).add(i, 'days').format('YYYY-MM-DD');
+      let task = tasksBuild(depAirCode, arrAirCode, deptDateAdded, speed, 1, catalogue)
+      tasks = tasks.concat(task)
+    }
+    return tasks
   }
 }
 
-function search(depDate, depAirCode, arrAirCode, speed, searchDayLong) {
-    if (searchDayLong === 1) {
-      let task = taskBuild(depAirCode, arrAirCode, depDate, speed)
-      // logger.info('task', task);
-      client.write(JSON.stringify(task));
-    } else {
-        for (let i = 0; i < searchDayLong; i++) {
-            let deptDateAdded = moment(depDate).add(i, 'days').format('YYYY-MM-DD');
-            let task = taskBuild(depAirCode, arrAirCode, deptDateAdded, speed)
-            client.write(JSON.stringify(task));
-        }
-    }
+if (depDate && depAirCode && arrAirCode && searchDayLong && speed) {
+  let tasksArray = []
+
+  let catalogue = (new Date).getTime();
+  tasksArray = tasksBuild(depAirCode, arrAirCode, depDate, speed, searchDayLong, catalogue)
+  let tasksInString = JSON.stringify(tasksArray) + '\n';
+  client.write(tasksInString)
 }
 
-search(depDate, depAirCode, arrAirCode, speed, searchDayLong)
+if (searchDefault) {
+  fs.readFile('../config/config.json', (err, data) => {
+    if (err) throw err;
+    let dataByString = data.toString()
+    let dataByJson = JSON.parse(dataByString)
+    let defaultConfig = dataByJson;
+    let defaultSearch = defaultConfig.defaultSearch
+
+    let catalogue = (new Date).getTime();
+    let defaultSearchRoutes = defaultSearch.routes
+    let seachDayLong = defaultSearch.seachDayLong
+    let seachDayStart = defaultSearch.seachDayStart
+    let seachSpeed = defaultSearch.speed
+    let tasksStack = []
+
+    if (seachDayStart === 'today') {
+      seachDayStart = moment().format('YYYY-MM-DD')
+    }
+    for (var i = 0; i < defaultSearchRoutes.length; i++) {
+      let depAirCode = defaultSearchRoutes[i].slice(0, 3)
+      let arrAirCode = defaultSearchRoutes[i].slice(3, 6)
+      let tasks = tasksBuild(depAirCode, arrAirCode, seachDayStart, seachSpeed, seachDayLong, catalogue)
+      tasksStack = tasksStack.concat(tasks)
+
+    }
+    tasksStack = JSON.stringify(tasksStack) + '\n';
+    client.write(tasksStack)
+    console.log('tasksStack', tasksStack);
+  });
+}

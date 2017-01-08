@@ -176,24 +176,24 @@ exports.req = req
 //     }
 // }
 
-// function longSearch(searchDayLong){
-//   let timeCount = 0;
-//   catalogue = (new Date).getTime();
-//   loggerFile.debug('catalogue: ',catalogue)
-//   for (let route of collection) {
-//     let depAirCode = route.slice(0, 3)
-//     let arrAirCode = route.slice(3, 6)
-//     // let deptDate = moment().format('YYYY-MM-DD')
-//     setTimeout(function() {
-//       search(depDate, depAirCode, arrAirCode, searchDayLong)
-//     }, timeCount)
-//     timeCount += searchDayLong*speed;
-//   }
-// }
+function longSearch(searchDayLong){
+  let timeCount = 0;
+  catalogue = (new Date).getTime();
+  loggerFile.debug('catalogue: ',catalogue)
+  for (let route of collection) {
+    let depAirCode = route.slice(0, 3)
+    let arrAirCode = route.slice(3, 6)
+    // let deptDate = moment().format('YYYY-MM-DD')
+    setTimeout(function() {
+      search(depDate, depAirCode, arrAirCode, searchDayLong)
+    }, timeCount)
+    timeCount += searchDayLong*speed;
+  }
+}
 //
-// if (searchDefault) {
-//   longSearch(searchDayLong)
-// }
+if (searchDefault) {
+  longSearch(searchDayLong)
+}
 //
 //
 // if (depDate && depAirCode && arrAirCode && searchDayLong) {
