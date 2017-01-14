@@ -130,34 +130,51 @@ function filter(resJson, depDate, depAiCode, arrAirCode) {
 
 
 function req(depDate, depAiCode, arrAirCode, errCount = requsetAgain) {
+  return new Promise(function(resolve, reject) {
     logger.info(depDate, depAiCode, arrAirCode,"resquest start")
     let errHead = `${depDate} from ${depAiCode} to ${arrAirCode} `
     let searchParam = setSearchParam(depDate, depAiCode, arrAirCode);
     // logger.info(errCount)
     request
-        .get(searchParam)
-        .charset('gbk')
-        .timeout(10000)
-        .end(function(err, res) {
-            // logger.debug(res)
-            if (err || res.Error) {
-                err.errCount = --errCount;
-                loggerFile.error(errHead, err)
-                loggerFile.error(errHead, `errCount: `, errCount)
-                if (errCount === 0) {
-                    loggerFile.fatal(errHead, `request fail`)
-                    process.exit(1);
-                } else {
-                    reqCTrip(depDate, depAiCode, arrAirCode, errCount)
-                }
-            } else {
-                let resJson = JSON.parse(res.text);
-                filter(resJson, depDate, depAiCode, arrAirCode) // resolve(res)
-            }
-        })
+    .get(searchParam)
+    .charset('gbk')
+    .timeout(10000)
+    .end(function(err, res) {
+      // logger.debug(res)
+      if (err || res.Error) {
+        err.errCount = --errCount;
+        loggerFile.error(errHead, err)
+        loggerFile.error(errHead, `errCount: `, errCount)
+        if (errCount === 0) {
+          loggerFile.fatal(errHead, `request fail`)
+          process.exit(1);
+        } else {
+          req(depDate, depAiCode, arrAirCode, errCount)
+        }
+      } else {
+        try {
+          let resJson = JSON.parse(res.text);
+          resolve(resJson)
+          filter(resJson, depDate, depAiCode, arrAirCode) // resolve(res)
+        } catch (e) {
+          errCount--;
+          logger.error('errCount :', errCount)
+          logger.error('parse err :', res.text)
+          loggerFile.error('errCount :', errCount)
+          loggerFile.error('parse err :', res.text)
+          reject(e)
+        }
+      }
+    })
+
+  });
+
+
+
 }
 
 exports.req = req
+exports.filter = filter
 // function search(depDate, depAiCode, arrAirCode, searchDayLong) {
 //     if (searchDayLong === 1) {
 //         reqCTrip(deptDate, deptAirportCode, arrAirportCode);
@@ -174,40 +191,4 @@ exports.req = req
 //             // timeParams.push(timeParam)
 //         }
 //     }
-// }
-
-function longSearch(searchDayLong){
-  let timeCount = 0;
-  catalogue = (new Date).getTime();
-  loggerFile.debug('catalogue: ',catalogue)
-  for (let route of collection) {
-    let depAirCode = route.slice(0, 3)
-    let arrAirCode = route.slice(3, 6)
-    // let deptDate = moment().format('YYYY-MM-DD')
-    setTimeout(function() {
-      search(depDate, depAirCode, arrAirCode, searchDayLong)
-    }, timeCount)
-    timeCount += searchDayLong*speed;
-  }
-}
-//
-if (searchDefault) {
-  longSearch(searchDayLong)
-}
-//
-//
-// if (depDate && depAirCode && arrAirCode && searchDayLong) {
-//   search(depDate, depAirCode, arrAirCode, searchDayLong)
-// }
-//
-// if (insist) {
-//   var job = new CronJob({
-//     cronTime: insist,
-//     onTick: function() {
-//       longSearch(searchDayLong)
-//     },
-//     start: false,
-//     timeZone: 'Asia/Shanghai'
-//   });
-//   job.start();
 // }

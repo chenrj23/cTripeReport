@@ -3,35 +3,11 @@ const EventEmitter = require('events');
 const program = require('commander');
 const ctrip = require('./cTrip.js')
 
-const moment = require('moment');
-const CronJob = require('cron').CronJob;
-
 const log4js = require('log4js');
 log4js.configure('../config/my_log4js_configuration.json')
 let logger = log4js.getLogger('console');
 let loggerFile = log4js.getLogger('fileLog'); //可以模块化
 logger.setLevel('debug');
-
-let catalogue = (new Date).getTime();
-
-program
-    .version('0.0.1')
-    .option('-t, --depDate <time>', 'seaching date like 2016-03-28')
-    .option('-d, --depAirCode <code>', 'depart airport code like SHA,PVG')
-    .option('-a, --arrAirCode <code>', 'arrive airport code like BJS,PEK')
-    .option('-l, --searchDayLong [number]', 'how many days search like 30')
-    .option('-f, --searchDefault', 'searchDefault')
-    .option('-i, --insist [times]', 'search auto')
-    .option('-s, --speed [times]', 'search speed')
-    // .option('-b, --debug [level]', '')
-    .parse(process.argv);
-
-    arrAirCode = program.arrAirCode || false,
-    depDate = program.depDate || moment().format('YYYY-MM-DD'),
-    searchDayLong = parseInt(program.searchDayLong) || 1,
-    searchDefault = program.searchDefault || false,
-    insist = program.insist || false,
-    speed = parseInt(program.speed) || 2000;
 
 class MyEmitter extends EventEmitter {}
 
@@ -53,13 +29,13 @@ TaskControl.prototype.tasksEmit = function(speed){
 const task = new TaskControl();
 
 myEmitter.on('request', (oneTask) => {
-  console.log("one task", oneTask);
-  console.log("tasks", task.tasks);
+  // console.log("one task", oneTask);
+  // console.log("tasks", task.tasks);
 
   let depDate = oneTask.depDate;
   let depAirCode = oneTask.depAirCode;
   let arrAirCode = oneTask.arrAirCode
-  ctrip.req(depDate, depAirCode, arrAirCode)
+  ctrip.req(depDate, depAirCode, arrAirCode).then(ctrip.filter)
   task.tasksEmit()
 });
 
@@ -104,5 +80,3 @@ server.on('error', (err) => {
 server.listen(8124, () => {
   console.log('server bound');
 });
-
-// const collection = ['PVGHRB', 'HRBPVG', 'PVGKWL', 'KWLPVG', 'SYXPVG', 'PVGSYX', 'PVGKWE', 'KWEPVG', 'KWEWNZ', 'WNZKWE', 'PVGZUH', 'ZUHPVG', 'ZUHCGO', 'CGOZUH', 'CGOHAK', 'HAKCGO', 'WNZHAK', 'HAKWNZ', 'ZUHTNA', 'TNAZUH', 'SZXTYN', 'TYNSZX', 'HETTYN', 'TYNHET', 'SZXHET', 'HETSZX', 'szxxic', 'xicszx', 'xicmig', 'migxic', 'migtna', 'tnamig', 'szxmig', 'migszx', 'xictna', 'tnaxic', 'szxhld', 'hldszx', 'hethld', 'hldhet']

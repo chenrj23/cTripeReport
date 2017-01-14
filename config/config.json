@@ -3,6 +3,6 @@
         "routes": ["PVGHRB", "HRBPVG", "PVGKWL", "KWLPVG", "SYXPVG", "PVGSYX", "PVGKWE", "KWEPVG", "KWEWNZ", "WNZKWE", "PVGZUH", "ZUHPVG", "ZUHCGO", "CGOZUH", "CGOHAK", "HAKCGO", "WNZHAK", "HAKWNZ", "ZUHTNA", "TNAZUH", "SZXTYN", "TYNSZX", "HETTYN", "TYNHET", "SZXHET", "HETSZX", "szxxic", "xicszx", "xicmig", "migxic", "migtna", "tnamig", "szxmig", "migszx", "xictna", "tnaxic", "szxhld", "hldszx", "hethld", "hldhet"],
         "seachDayLong": 60,
         "seachDayStart": "today",
-        "speed": 2000
+        "speed": 1000
     }
 }
