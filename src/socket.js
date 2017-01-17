@@ -29,15 +29,43 @@ TaskControl.prototype.tasksEmit = function(speed){
 const task = new TaskControl();
 
 myEmitter.on('request', (oneTask) => {
-  // console.log("one task", oneTask);
-  // console.log("tasks", task.tasks);
 
   let depDate = oneTask.depDate;
   let depAirCode = oneTask.depAirCode;
   let arrAirCode = oneTask.arrAirCode
-  ctrip.req(depDate, depAirCode, arrAirCode).then(ctrip.filter)
-  task.tasksEmit()
+  ctrip.req(depDate, depAirCode, arrAirCode)
+    .then(({resJson, depDate, depAiCode, arrAirCode})=>
+      ctrip.filter(resJson, depDate, depAiCode, arrAirCode)
+    )
+    .then(()=>{
+      task.tasksEmit()
+    })
+    .catch((err)=>{
+      logger.error(err)
+      logger.info("wait 1 min restart for request")
+      setTimeout(()=>{
+        logger.info("now after 1 min restart request")
+        task.tasksEmit()
+      }, 60000)
+    })
 });
+//
+// myEmitter.on('wait', (oneTask) => {
+//
+//   let depDate = oneTask.depDate;
+//   let depAirCode = oneTask.depAirCode;
+//   let arrAirCode = oneTask.arrAirCode
+//   ctrip.req(depDate, depAirCode, arrAirCode)
+//     .then(()=>{
+//       task.tasksEmit()
+//     })
+//     .catch((err)=>{
+//       logger.error(err)
+//     })
+// });
+//
+
+
 
 const server = net.createServer((c) => {
   // 'connection' listener

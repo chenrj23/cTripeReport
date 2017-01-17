@@ -5,14 +5,11 @@ charset(request);
 const log4js = require('log4js');
 log4js.configure('../config/my_log4js_configuration.json')
 let logger = log4js.getLogger('console');
-let loggerFile = log4js.getLogger('fileLog'); //可以模块化
+let loggerFile = log4js.getLogger('fileLog'); //应模块化
 logger.setLevel('debug');
 
 const connectMysql = require('./connectMysql.js');
 const pool = connectMysql.pool;
-
-let catalogue = (new Date).getTime();
-const collection = ['PVGHRB', 'HRBPVG', 'PVGKWL', 'KWLPVG', 'SYXPVG', 'PVGSYX', 'PVGKWE', 'KWEPVG', 'KWEWNZ', 'WNZKWE', 'PVGZUH', 'ZUHPVG', 'ZUHCGO', 'CGOZUH', 'CGOHAK', 'HAKCGO', 'WNZHAK', 'HAKWNZ', 'ZUHTNA', 'TNAZUH', 'SZXTYN', 'TYNSZX', 'HETTYN', 'TYNHET', 'SZXHET', 'HETSZX', 'szxxic', 'xicszx', 'xicmig', 'migxic', 'migtna', 'tnamig', 'szxmig', 'migszx', 'xictna', 'tnaxic', 'szxhld', 'hldszx', 'hethld', 'hldhet']
 
 const requsetAgain = 3;
 
@@ -22,110 +19,107 @@ function setSearchParam(depDate, depAiCode, arrAirCode) {
 }
 
 function filter(resJson, depDate, depAiCode, arrAirCode) {
+  return new Promise(function(resolve, reject) {
+
     if (resJson.Error) {
-        loggerFile.error(depAiCode, arrAirCode, depDate, 'request error!')
-        loggerFile.error(resJson.Error)
-        return
-    }
-    let flightDataArrays = resJson.fis;
-    // console.log(resJson);
-    let filteredData = flightDataArrays.map(function(flightData) {
-            let flightNo,
-                airlineCode,
-                depAirport,
-                arrAirport,
-                depCity,
-                arrCity,
-                depDate,
-                depDateTime,
-                price,
-                fType,
-                // lowestPrice,
-                // fullPrice,
-                isShare = false,
-                isStopover = false,
-                isCombinedTransport = false,
-                shareFlight = 'none',
-                stopoverCity = 'none',
-                combinedTransport = 'none';
+      loggerFile.error(depAiCode, arrAirCode, depDate, 'request error!')
+      loggerFile.error(resJson.Error)
+      reject(resJson.Error)
+    }else {
+      let flightDataArrays = resJson.fis;
+      let filteredData = flightDataArrays.map(function(flightData) {
+        let flightNo,
+        airlineCode,
+        depAirport,
+        arrAirport,
+        depCity,
+        arrCity,
+        depDate,
+        depDateTime,
+        price,
+        fType,
+        // lowestPrice,
+        // fullPrice,
+        isShare = false,
+        isStopover = false,
+        isCombinedTransport = false,
+        shareFlight = 'none',
+        stopoverCity = 'none',
+        combinedTransport = 'none';
 
-            flightNo = flightData.fn;
-            depAirport = flightData.dpc;
-            arrAirport = flightData.apc;
-            depCity = flightData.dcc;
-            arrCity = flightData.acc;
-            fType = flightData.cf.c;
-            depDateTime = flightData.dt;
-            price = Number(flightData.lp);
-            // console.log(price);
-            // console.log(typeof depDateTime);
+        flightNo = flightData.fn;
+        depAirport = flightData.dpc;
+        arrAirport = flightData.apc;
+        depCity = flightData.dcc;
+        arrCity = flightData.acc;
+        fType = flightData.cf.c;
+        depDateTime = flightData.dt;
+        price = Number(flightData.lp);
+        // console.log(price);
+        // console.log(typeof depDateTime);
 
-            if (flightData.sdft) {
-                shareFlight = flightData.sdft;
-                isShare = true;
-            };
+        if (flightData.sdft) {
+          shareFlight = flightData.sdft;
+          isShare = true;
+        };
 
-            if (flightData.sts) {
-                isStopover = true;
-                stopoverCity = '';
-                for (let sts of flightData.sts) {
-                    stopoverCity += sts.cn;
-                }
-            };
+        if (flightData.sts) {
+          isStopover = true;
+          stopoverCity = '';
+          for (let sts of flightData.sts) {
+            stopoverCity += sts.cn;
+          }
+        };
 
-            if (flightData.xpsm) {
-                isCombinedTransport = true;
-                combinedTransport = `from ${flightData.axp.ts.cn} by ${flightData.axp.num} `
-            }
+        if (flightData.xpsm) {
+          isCombinedTransport = true;
+          combinedTransport = `from ${flightData.axp.ts.cn} by ${flightData.axp.num} `
+        }
 
 
-            let mysqlStructure = {
-                airlineCode: flightNo.slice(0, 2),
-                flightNo: flightNo.slice(2),
-                depDate: depDateTime.slice(0, 10),
-                depDateTime: depDateTime.slice(11),
-                price: price,
-                depCity: depCity,
-                depAirport: depAirport,
-                arrCity: arrCity,
-                arrAirport: arrAirport,
-                fType: fType,
-                isShare: isShare,
-                shareFlight: shareFlight,
-                isStopover: isStopover,
-                stopoverCity: stopoverCity,
-                isCombinedTransport: isCombinedTransport,
-                combinedTransport: combinedTransport,
-                catalogue: catalogue,
-            };
-            //
-            let arr = [];
-            for (let i in mysqlStructure) {
-                arr.push(mysqlStructure[i]);
-            }
-            // console.log(mysqlStructure);
-            return arr
-        })
-        // logger.debug(filteredData)
+        let mysqlStructure = {
+          airlineCode: flightNo.slice(0, 2),
+          flightNo: flightNo.slice(2),
+          depDate: depDateTime.slice(0, 10),
+          depDateTime: depDateTime.slice(11),
+          price: price,
+          depCity: depCity,
+          depAirport: depAirport,
+          arrCity: arrCity,
+          arrAirport: arrAirport,
+          fType: fType,
+          isShare: isShare,
+          shareFlight: shareFlight,
+          isStopover: isStopover,
+          stopoverCity: stopoverCity,
+          isCombinedTransport: isCombinedTransport,
+          combinedTransport: combinedTransport,
+          catalogue: catalogue,
+        };
+        //
+        let arr = [];
+        for (let i in mysqlStructure) {
+          arr.push(mysqlStructure[i]);
+        }
+        // console.log(mysqlStructure);
+        return arr
+      })
+      // logger.debug(filteredData)
 
-    pool.query('INSERT INTO flightsdata (airlineCode,flightNo,depDate,depDateTime,price,depCity,depAirport,arrCity,arrAirport,fType,isShare,shareFlight,isStopover,stopoverCity,isCombinedTransport,combinedTransport,catalogue) VALUES ?', [filteredData], function(err, result) {
+      pool.query('INSERT INTO flightsdata (airlineCode,flightNo,depDate,depDateTime,price,depCity,depAirport,arrCity,arrAirport,fType,isShare,shareFlight,isStopover,stopoverCity,isCombinedTransport,combinedTransport,catalogue) VALUES ?', [filteredData], function(err, result) {
         if (err) {
-            // loggerFile.error(err)
-            // loggerFile.error('INSERT INTO flightsdata (airlineCode,flightNo,depDate,depDateTime,price,depAirport,arrAirport,fType,isShare,shareFlight,isStopover,stopoverCity,isCombinedTransport,combinedTransport,catalogue) VALUES ?')
-            loggerFile.error(depDate, depAiCode, arrAirCode, 'insert have an error')
-            loggerFile.error('flightDataArrays: ', flightDataArrays)
-            loggerFile.error('filteredData:', [filteredData])
-            loggerFile.error('insert error:', err)
-            return
+          loggerFile.error(depDate, depAiCode, arrAirCode, 'insert have an error')
+          loggerFile.error('flightDataArrays: ', flightDataArrays)
+          loggerFile.error('filteredData:', [filteredData])
+          loggerFile.error('insert error:', err)
+          reject(err)
         }
         logger.info(depDate, depAiCode, arrAirCode, 'insert')
-            // queryCount--;
-            // logger.debug('query count is: ', queryCount)
-            // logger.debug('query is start', result)
-            // if (queryCount <= 0) {
-            //     // connection.end();
-            // }
-    });
+        resolve({depDate, depAiCode, arrAirCode})
+      });
+    }
+  });
+
 }
 
 
@@ -150,12 +144,13 @@ function req(depDate, depAiCode, arrAirCode, errCount = requsetAgain) {
           process.exit(1);
         } else {
           req(depDate, depAiCode, arrAirCode, errCount)
+          .then((data)=>reject(data))
         }
       } else {
         try {
           let resJson = JSON.parse(res.text);
-          resolve(resJson)
-          filter(resJson, depDate, depAiCode, arrAirCode) // resolve(res)
+          let data = {resJson, depDate, depAiCode, arrAirCode}
+          resolve(data)
         } catch (e) {
           errCount--;
           logger.error('errCount :', errCount)

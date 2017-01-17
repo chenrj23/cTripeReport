@@ -1,22 +1,15 @@
 const express = require('express');
 const app = express();
-const log4js = require('log4js');
-const mysql      = require('mysql');
 const path = require('path');
-const connection = mysql.createConnection({
-  host     : '120.27.5.155',
-  user     : 'root',
-  password : 'y8kyscsy',
-  database : 'cTrip',
-});
 
-const pool  = mysql.createPool({
-  connectionLimit : 10,
-  host            : '120.27.5.155',
-  user            : 'root',
-  password        : 'y8kyscsy',
-  database        : 'cTrip'
-});
+const connectMysql = require('./connectMysql.js');
+const pool = connectMysql.pool;
+
+const log4js = require('log4js');
+log4js.configure('../config/my_log4js_configuration.json')
+let logger = log4js.getLogger('console');
+let loggerFile = log4js.getLogger('fileLog'); //可以模块化
+logger.setLevel('debug');
 
 app.set('views', '../views')
 app.set('view engine', 'pug')
@@ -30,26 +23,6 @@ app.use('/', express.static(path.join(__dirname, '../public')));
 //     res.header("Content-Type", "application/json;charset=utf-8");
 //     next();
 // });
-
-connection.connect(function(err) {
-  if (err) {
-    logger.error('error connecting: ' + err.stack);
-    return;
-  }
-  logger.info('connected as id ' + connection.threadId);
-});
-
-log4js.configure({
-  appenders: [
-    { type: 'console' },
-    { type: 'file', filename: '../logs/cTrip.log', category: 'fileLog' }
-  ]
-});
-
-let logger = log4js.getLogger('console');
-let loggerFile = log4js.getLogger('fileLog');
-
-logger.setLevel('debug');
 
 
 // SELECT * FROM flightsdata where depAirport = 'ZUH' and  arrAirport = 'PVG' order by depDate, depDateTime;

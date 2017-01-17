@@ -1,42 +1,58 @@
 const net = require('net');
 const fs = require('fs');
 const EventEmitter = require('events');
-const program = require('commander');
 const moment = require('moment');
 const CronJob = require('cron').CronJob;
+
+const program = require('commander');
+program
+.version('0.0.1')
+.option('-t, --depDate <time>', 'seaching date like 2016-03-28')
+.option('-d, --depAirCode <code>', 'depart airport code like SHA,PVG')
+.option('-a, --arrAirCode <code>', 'arrive airport code like BJS,PEK')
+.option('-l, --searchDayLong [number]', 'how many days search like 30')
+.option('-f, --searchDefault', 'searchDefault')
+.option('-i, --insist [times]', 'search auto')
+.option('-s, --speed [times]', 'search speed')
+.option('-b, --debug [level]', '')
+.parse(process.argv);
+
+const depAirCode = program.depAirCode || false,
+arrAirCode = program.arrAirCode || false,
+depDate = program.depDate || moment().format('YYYY-MM-DD'),
+searchDayLong = parseInt(program.searchDayLong) || 1,
+searchDefault = program.searchDefault || false,
+insist = program.insist || false,
+speed = parseInt(program.speed) || 2000;
+debugLevel = program.debug || 'info'
 
 const log4js = require('log4js');
 log4js.configure('../config/my_log4js_configuration.json')
 let logger = log4js.getLogger('console');
-let loggerFile = log4js.getLogger('fileLog'); //可以模块化
+let loggerFile = log4js.getLogger('fileLog');    //应模块化
+switch (debugLevel) {
+  case 'debug':
+  logger.setLevel('debug');
+  break;
+  case 'info':
+  logger.setLevel('info');
+  break;
+  case 'warn':
+  logger.setLevel('warn');
+  break;
+  case 'error':
+  logger.setLevel('error');
+  break;
+  default:
+  logger.setLevel('info');
+}
 
-
-program
-    .version('0.0.1')
-    .option('-t, --depDate <time>', 'seaching date like 2016-03-28')
-    .option('-d, --depAirCode <code>', 'depart airport code like SHA,PVG')
-    .option('-a, --arrAirCode <code>', 'arrive airport code like BJS,PEK')
-    .option('-l, --searchDayLong [number]', 'how many days search like 30')
-    .option('-f, --searchDefault', 'searchDefault')
-    .option('-i, --insist [times]', 'search auto')
-    .option('-s, --speed [times]', 'search speed')
-    .option('-b, --debug [level]', '')
-    .parse(process.argv);
-
-const depAirCode = program.depAirCode || false,
-    arrAirCode = program.arrAirCode || false,
-    depDate = program.depDate || moment().format('YYYY-MM-DD'),
-    searchDayLong = parseInt(program.searchDayLong) || 1,
-    searchDefault = program.searchDefault || false,
-    insist = program.insist || false,
-    speed = parseInt(program.speed) || 2000;
-    debugLevel = program.debug || 'info'
 
 const client = net.createConnection({port: 8124}, () => {
     //'connect' listener
   console.log('connected to server!');
   client.on('data', (data) => {
-    // console.log(data.toString());
+    logger.info((data.toString())
   });
 
   client.on('end', () => {
@@ -75,7 +91,7 @@ if (depDate && depAirCode && arrAirCode && searchDayLong && speed) {
 }
 
 function startSearch(searchDefault){
-  logger.debug("startSearch")
+  logger.info("startSearch")
   if (searchDefault) {
     fs.readFile('../config/config.json', (err, data) => {
       if (err) throw err;
@@ -122,24 +138,6 @@ if (insist) {
   });
   job.start();
 }
-
-switch (debugLevel) {
-  case 'debug':
-  logger.setLevel('debug');
-  break;
-  case 'info':
-  logger.setLevel('info');
-  break;
-  case 'warn':
-  logger.setLevel('warn');
-  break;
-  case 'error':
-  logger.setLevel('error');
-  break;
-  default:
-  logger.setLevel('info');
-}
-
 
 process.on('SIGINT', () => {
   client.end();
