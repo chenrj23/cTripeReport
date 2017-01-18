@@ -2,6 +2,7 @@ const net = require('net');
 const EventEmitter = require('events');
 const program = require('commander');
 const ctrip = require('./cTrip.js')
+const myRedis = require('./myRedis')
 
 const log4js = require('log4js');
 log4js.configure('../config/my_log4js_configuration.json')
@@ -17,11 +18,11 @@ function TaskControl(tasks){
   this.tasks = tasks || [];
 }
 
-TaskControl.prototype.tasksEmit = function(speed){
+TaskControl.prototype.nextTask = function(speed){
   if (this.tasks.length > 0) {
-    logger.info('tasksEmit')
+    logger.info('nextTask')
     let oneTask = this.tasks.shift()
-    setTimeout(()=>myEmitter.emit('request', oneTask), oneTask.speed)
+    setTimeout(()=>myEmitter.emit(oneTask.type, oneTask), oneTask.speed)
   }else {
     logger.info('no tasks')
   }
@@ -35,36 +36,27 @@ myEmitter.on('request', (oneTask) => {
   let arrAirCode = oneTask.arrAirCode
   ctrip.req(depDate, depAirCode, arrAirCode)
     .then(({resJson, depDate, depAiCode, arrAirCode})=>
-      ctrip.filter(resJson, depDate, depAiCode, arrAirCode)
+      ctrip.filter(resJson, depDate, depAiCode, arrAirCode, oneTask.catalogue)
     )
     .then(()=>{
-      task.tasksEmit()
+      task.nextTask()
     })
     .catch((err)=>{
       logger.error(err)
       logger.info("wait 1 min restart for request")
       setTimeout(()=>{
         logger.info("now after 1 min restart request")
-        task.tasksEmit()
+        task.nextTask()
       }, 60000)
     })
 });
-//
-// myEmitter.on('wait', (oneTask) => {
-//
-//   let depDate = oneTask.depDate;
-//   let depAirCode = oneTask.depAirCode;
-//   let arrAirCode = oneTask.arrAirCode
-//   ctrip.req(depDate, depAirCode, arrAirCode)
-//     .then(()=>{
-//       task.tasksEmit()
-//     })
-//     .catch((err)=>{
-//       logger.error(err)
-//     })
-// });
-//
 
+myEmitter.on('cache', (oneTask) => {
+  let depAirCode = oneTask.depAirCode;
+  let arrAirCode = oneTask.arrAirCode
+  myRedis.cache(depAirCode,arrAirCode)
+  task.nextTask()
+});
 
 
 const server = net.createServer((c) => {
@@ -95,7 +87,7 @@ const server = net.createServer((c) => {
       task.tasks = tasksStack.concat(task.tasks)
       logger.debug('tasksStack', tasksStack);
       logger.debug('task.tasks', task.tasks);
-      task.tasksEmit()
+      task.nextTask()
     }
   });
   c.write('You are Welcome！\r\n');

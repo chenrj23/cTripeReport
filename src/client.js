@@ -52,7 +52,7 @@ const client = net.createConnection({port: 8124}, () => {
     //'connect' listener
   console.log('connected to server!');
   client.on('data', (data) => {
-    logger.info((data.toString())
+    logger.info(data.toString())
   });
 
   client.on('end', () => {
@@ -62,31 +62,23 @@ const client = net.createConnection({port: 8124}, () => {
 
 
 function tasksBuild(depAirCode, arrAirCode, depDate, speed, searchDayLong, catalogue){
-  if (searchDayLong === 1) {
-      return [{
-        depAirCode: depAirCode,
-        arrAirCode: arrAirCode,
-        depDate: depDate,
-        speed: speed,
-        catalogue: catalogue,
-      }]
-  }else {
-    let tasks = []
-    for (let i = 0; i < searchDayLong; i++) {
-      let deptDateAdded = moment(depDate).add(i, 'days').format('YYYY-MM-DD');
-      let task = tasksBuild(depAirCode, arrAirCode, deptDateAdded, speed, 1, catalogue)
-      tasks = tasks.concat(task)
-    }
-    return tasks
+  let tasks = [];
+  for (let i = 0; i < searchDayLong; i++) {
+    let deptDateAdded = moment(depDate).add(i, 'days').format('YYYY-MM-DD');
+    let task = {depAirCode, arrAirCode, depDate: deptDateAdded, speed, catalogue, type: 'request'}
+    tasks.push(task)
   }
+  tasks.push({depAirCode, arrAirCode, type: 'cache'})
+  return tasks
 }
 
 if (depDate && depAirCode && arrAirCode && searchDayLong && speed) {
-  let tasksArray = []
+  let tasksStack = []
 
   let catalogue = (new Date).getTime();
-  tasksArray = tasksBuild(depAirCode, arrAirCode, depDate, speed, searchDayLong, catalogue)
-  let tasksInString = JSON.stringify(tasksArray) + '\n';
+  tasksStack = tasksBuild(depAirCode, arrAirCode, depDate, speed, searchDayLong, catalogue)
+  let tasksInString = JSON.stringify(tasksStack) + '\n';
+  logger.debug('tasksStack', tasksStack);
   client.write(tasksInString)
 }
 

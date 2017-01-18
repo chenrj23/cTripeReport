@@ -14,7 +14,10 @@ let loggerFile = log4js.getLogger('fileLog'); //可以模块化
 logger.setLevel('debug');
 
 const redis = require("redis"),
-    client = redis.createClient();
+    client = redis.createClient({
+      host:  '120.27.5.155',
+      password: 'Y8kyscsy'
+    });
 
 // if you'd like to select database 3, instead of 0 (default), call
 // client.select(3, function() { /* ... */ });
@@ -29,7 +32,6 @@ function catalogueMaxQueryByCity(depCity, arrCity){
         depCity: depCity,
         arrCity: arrCity,
         catalogue: catalogue,
-        formatedCatalogue: (new Date(parseInt(catalogue))),
       }
       resolve(result)
     });
@@ -154,6 +156,7 @@ function queryLongPriceByCity(depCity, arrCity){
       // logger.debug(rows)
       // logger.debug(result)
       logger.info('lt is ok ', depCity, ' to ', arrCity)
+      result = {flightPrice: result}
       resolve(result)
     })
   })
@@ -161,20 +164,22 @@ function queryLongPriceByCity(depCity, arrCity){
 
 
 
-let depCity = "SHA"
-let arrCity = "KWE"
-let timeStart = new Date()
-logger.info('have a req from ', depCity, ' to ', arrCity)
-queryLongPriceByCity(depCity, arrCity)
+function cache(depCity, arrCity) {
+  let timeStart = new Date()
+  logger.info('cacheing from ', depCity, ' to ', arrCity)
+  queryLongPriceByCity(depCity, arrCity)
   .then(function(result){
     let timeUsed = new Date() - timeStart
     logger.info('Time use :', timeUsed)
     // logger.debug("result", result)
     let resultString = JSON.stringify(result)
-    let key = depCity + arrCity
+    let key = depCity.toUpperCase() + arrCity..toUpperCase()
+    logger.debug('key:', key)
     client.set(key, resultString, redis.print);
   })
+}
 
+exports.cache  = cache
 
 
 // client.on("error", function (err) {

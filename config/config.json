@@ -1,8 +1,8 @@
 {
     "defaultSearch": {
-        "routes": ["PVGHRB", "HRBPVG", "PVGKWL", "KWLPVG", "SYXPVG", "PVGSYX", "PVGKWE", "KWEPVG", "KWEWNZ", "WNZKWE", "PVGZUH", "ZUHPVG", "ZUHCGO", "CGOZUH", "CGOHAK", "HAKCGO", "WNZHAK", "HAKWNZ", "ZUHTNA", "TNAZUH", "SZXTYN", "TYNSZX", "HETTYN", "TYNHET", "SZXHET", "HETSZX", "szxxic", "xicszx", "xicmig", "migxic", "migtna", "tnamig", "szxmig", "migszx", "xictna", "tnaxic", "szxhld", "hldszx", "hethld", "hldhet"],
-        "seachDayLong": 60,
+        "routes": ["SHAHRB", "HRBSHA", "SHAKWL", "KWLSHA", "SYXSHA", "SHASYX", "SHAKWE", "KWESHA", "KWEWNZ", "WNZKWE", "SHAZUH", "ZUHSHA", "ZUHCGO", "CGOZUH", "CGOHAK", "HAKCGO", "WNZHAK", "HAKWNZ", "ZUHTNA", "TNAZUH", "SZXHET", "HETSZX", "szxhld", "hldszx", "hethld", "hldhet"],
+        "seachDayLong": 30,
         "seachDayStart": "today",
-        "speed": 1000
+        "speed": 1200
     }
 }

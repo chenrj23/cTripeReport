@@ -18,7 +18,7 @@ function setSearchParam(depDate, depAiCode, arrAirCode) {
     return requestHttp
 }
 
-function filter(resJson, depDate, depAiCode, arrAirCode) {
+function filter(resJson, depDate, depAiCode, arrAirCode, catalogue) {
   return new Promise(function(resolve, reject) {
 
     if (resJson.Error) {
@@ -27,96 +27,102 @@ function filter(resJson, depDate, depAiCode, arrAirCode) {
       reject(resJson.Error)
     }else {
       let flightDataArrays = resJson.fis;
-      let filteredData = flightDataArrays.map(function(flightData) {
-        let flightNo,
-        airlineCode,
-        depAirport,
-        arrAirport,
-        depCity,
-        arrCity,
-        depDate,
-        depDateTime,
-        price,
-        fType,
-        // lowestPrice,
-        // fullPrice,
-        isShare = false,
-        isStopover = false,
-        isCombinedTransport = false,
-        shareFlight = 'none',
-        stopoverCity = 'none',
-        combinedTransport = 'none';
+      if(flightDataArrays.length > 0){
+        let filteredData = flightDataArrays.map(function(flightData) {
+          let flightNo,
+          airlineCode,
+          depAirport,
+          arrAirport,
+          depCity,
+          arrCity,
+          depDate,
+          depDateTime,
+          price,
+          fType,
+          // lowestPrice,
+          // fullPrice,
+          isShare = false,
+          isStopover = false,
+          isCombinedTransport = false,
+          shareFlight = 'none',
+          stopoverCity = 'none',
+          combinedTransport = 'none';
 
-        flightNo = flightData.fn;
-        depAirport = flightData.dpc;
-        arrAirport = flightData.apc;
-        depCity = flightData.dcc;
-        arrCity = flightData.acc;
-        fType = flightData.cf.c;
-        depDateTime = flightData.dt;
-        price = Number(flightData.lp);
-        // console.log(price);
-        // console.log(typeof depDateTime);
+          flightNo = flightData.fn;
+          depAirport = flightData.dpc;
+          arrAirport = flightData.apc;
+          depCity = flightData.dcc;
+          arrCity = flightData.acc;
+          fType = flightData.cf.c;
+          depDateTime = flightData.dt;
+          price = Number(flightData.lp);
+          // console.log(price);
+          // console.log(typeof depDateTime);
 
-        if (flightData.sdft) {
-          shareFlight = flightData.sdft;
-          isShare = true;
-        };
+          if (flightData.sdft) {
+            shareFlight = flightData.sdft;
+            isShare = true;
+          };
 
-        if (flightData.sts) {
-          isStopover = true;
-          stopoverCity = '';
-          for (let sts of flightData.sts) {
-            stopoverCity += sts.cn;
+          if (flightData.sts) {
+            isStopover = true;
+            stopoverCity = '';
+            for (let sts of flightData.sts) {
+              stopoverCity += sts.cn;
+            }
+          };
+
+          if (flightData.xpsm) {
+            isCombinedTransport = true;
+            combinedTransport = `from ${flightData.axp.ts.cn} by ${flightData.axp.num} `
           }
-        };
-
-        if (flightData.xpsm) {
-          isCombinedTransport = true;
-          combinedTransport = `from ${flightData.axp.ts.cn} by ${flightData.axp.num} `
-        }
 
 
-        let mysqlStructure = {
-          airlineCode: flightNo.slice(0, 2),
-          flightNo: flightNo.slice(2),
-          depDate: depDateTime.slice(0, 10),
-          depDateTime: depDateTime.slice(11),
-          price: price,
-          depCity: depCity,
-          depAirport: depAirport,
-          arrCity: arrCity,
-          arrAirport: arrAirport,
-          fType: fType,
-          isShare: isShare,
-          shareFlight: shareFlight,
-          isStopover: isStopover,
-          stopoverCity: stopoverCity,
-          isCombinedTransport: isCombinedTransport,
-          combinedTransport: combinedTransport,
-          catalogue: catalogue,
-        };
-        //
-        let arr = [];
-        for (let i in mysqlStructure) {
-          arr.push(mysqlStructure[i]);
-        }
-        // console.log(mysqlStructure);
-        return arr
-      })
-      // logger.debug(filteredData)
+          let mysqlStructure = {
+            airlineCode: flightNo.slice(0, 2),
+            flightNo: flightNo.slice(2),
+            depDate: depDateTime.slice(0, 10),
+            depDateTime: depDateTime.slice(11),
+            price: price,
+            depCity: depCity,
+            depAirport: depAirport,
+            arrCity: arrCity,
+            arrAirport: arrAirport,
+            fType: fType,
+            isShare: isShare,
+            shareFlight: shareFlight,
+            isStopover: isStopover,
+            stopoverCity: stopoverCity,
+            isCombinedTransport: isCombinedTransport,
+            combinedTransport: combinedTransport,
+            catalogue: catalogue,
+          };
+          //
+          let arr = [];
+          for (let i in mysqlStructure) {
+            arr.push(mysqlStructure[i]);
+          }
+          // console.log(mysqlStructure);
+          return arr
+        })
+        // logger.debug(filteredData)
 
-      pool.query('INSERT INTO flightsdata (airlineCode,flightNo,depDate,depDateTime,price,depCity,depAirport,arrCity,arrAirport,fType,isShare,shareFlight,isStopover,stopoverCity,isCombinedTransport,combinedTransport,catalogue) VALUES ?', [filteredData], function(err, result) {
-        if (err) {
-          loggerFile.error(depDate, depAiCode, arrAirCode, 'insert have an error')
-          loggerFile.error('flightDataArrays: ', flightDataArrays)
-          loggerFile.error('filteredData:', [filteredData])
-          loggerFile.error('insert error:', err)
-          reject(err)
-        }
-        logger.info(depDate, depAiCode, arrAirCode, 'insert')
-        resolve({depDate, depAiCode, arrAirCode})
-      });
+        pool.query('INSERT INTO flightsdata (airlineCode,flightNo,depDate,depDateTime,price,depCity,depAirport,arrCity,arrAirport,fType,isShare,shareFlight,isStopover,stopoverCity,isCombinedTransport,combinedTransport,catalogue) VALUES ?', [filteredData], function(err, result) {
+          if (err) {
+            loggerFile.error(depDate, depAiCode, arrAirCode, 'insert have an error')
+            loggerFile.error('flightDataArrays: ', flightDataArrays)
+            loggerFile.error('filteredData:', [filteredData])
+            loggerFile.error('insert error:', err)
+            reject(err)
+          }
+          logger.info(depDate, depAiCode, arrAirCode, 'insert')
+          resolve({depDate, depAiCode, arrAirCode})
+        });
+      }else {
+        logger.info('flightDataArrays is []')
+        resolve(null)
+      }
+
     }
   });
 
@@ -144,12 +150,12 @@ function req(depDate, depAiCode, arrAirCode, errCount = requsetAgain) {
           process.exit(1);
         } else {
           req(depDate, depAiCode, arrAirCode, errCount)
-          .then((data)=>reject(data))
+          .then((data)=>resolve(data))
         }
       } else {
         try {
           let resJson = JSON.parse(res.text);
-          let data = {resJson, depDate, depAiCode, arrAirCode}
+          let data = {resJson, depDate, depAiCode, arrAirCode,}
           resolve(data)
         } catch (e) {
           errCount--;
