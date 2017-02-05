@@ -2,11 +2,10 @@ const request = require('superagent');
 const charset = require('superagent-charset');
 charset(request);
 
-const log4js = require('log4js');
-log4js.configure('../config/my_log4js_configuration.json')
-let logger = log4js.getLogger('console');
-let loggerFile = log4js.getLogger('fileLog'); //应模块化
-logger.setLevel('debug');
+const myLog = require('./logConfig.js')
+const logger = myLog.logger;
+const loggerFile = myLog.loggerFile;
+
 
 const connectMysql = require('./connectMysql.js');
 const pool = connectMysql.pool;
