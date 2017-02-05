@@ -16,17 +16,33 @@ const myEmitter = new MyEmitter();
 
 function TaskControl(tasks){
   this.tasks = tasks || [];
+  this.execution = 0;
 }
 
 TaskControl.prototype.nextTask = function(speed){
-  if (this.tasks.length > 0) {
+
+  if (this.tasks.length > 0 && this.execution === 1) {
     logger.info('nextTask')
     let oneTask = this.tasks.shift()
     setTimeout(()=>myEmitter.emit(oneTask.type, oneTask), oneTask.speed)
+  }else if (this.execution > 1) {
+    logger.info('lt have ', this.execution, ' execution')
+    this.cutExecution();
   }else {
     logger.info('no tasks')
+    this.cutExecution();
   }
 }
+
+TaskControl.prototype.addExecution = function(){
+  this.execution++
+}
+
+TaskControl.prototype.cutExecution = function(){
+  this.execution--
+}
+
+
 const task = new TaskControl();
 
 myEmitter.on('request', (oneTask) => {
@@ -87,6 +103,7 @@ const server = net.createServer((c) => {
       task.tasks = tasksStack.concat(task.tasks)
       logger.debug('tasksStack', tasksStack);
       logger.debug('task.tasks', task.tasks);
+      task.addExecution()
       task.nextTask()
     }
   });

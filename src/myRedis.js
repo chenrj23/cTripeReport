@@ -173,7 +173,7 @@ function cache(depCity, arrCity) {
     logger.info('Time use :', timeUsed)
     // logger.debug("result", result)
     let resultString = JSON.stringify(result)
-    let key = depCity.toUpperCase() + arrCity..toUpperCase()
+    let key = depCity.toUpperCase() + arrCity.toUpperCase()
     logger.debug('key:', key)
     client.set(key, resultString, redis.print);
   })

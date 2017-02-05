@@ -229,8 +229,10 @@ function findRoute(depAirport, arrAirport){
   let route = depAirport + arrAirport;
   route = route.toUpperCase()
   logger.debug("route is ", route)
-  return function (flightPrice) {
-    logger.debug("flightPrice route is ", flightPrice.route)
+  return function (data) {
+    const flightPrice = data.flightPrice
+    // logger.debug("flightPrice is ", flightPrice)
+    // logger.debug("flightPrice route is ", flightPrice.route)
     return flightPrice.route == route
   }
 }
@@ -253,7 +255,7 @@ app.get('/api/byCityFromCache', function (req, res) {
   let arrCity = req.query.arrCity
   let timeStart = new Date()
   logger.info('have a req from ', depCity, ' to ', arrCity)
-  const key = depCity.toUpperCase() + arrCity..toUpperCase()
+  const key = depCity.toUpperCase() + arrCity.toUpperCase()
   client.get(key, (err, reply)=>{
     if (err) {
       logger.error('redis get have err', err)
@@ -297,6 +299,7 @@ app.get('/api/byCityStopOver', function (req, res) {
     let findSecondShortFlight = findRoute(stopOverCity, arrCity)
     let findLongFlight = findRoute(depCity, arrCity)
 
+    logger.debug('flightsPrice is ', flightsPrice)
     let FirstShortFlightArrNumber = flightsPrice.findIndex(findFirstShortFlight)
     let SecondShortFlightArrNumber = flightsPrice.findIndex(findSecondShortFlight)
     let LongFlightArrNumber = flightsPrice.findIndex(findLongFlight)
@@ -335,7 +338,7 @@ function queryLongPriceByCity(depCity, arrCity){
       // logger.debug(rows)
       logger.info('lt is ok ', depCity, ' to ', arrCity)
       result = {flightPrice: result}
-      // logger.debug(result)
+      logger.debug(`${depCity} to ${arrCity} data :`,result)
       resolve(result)
     })
   })

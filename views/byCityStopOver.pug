@@ -8,4 +8,5 @@ html
       .row
         .col-lg-10.col-md-10
           each flightPrice in flightsPrice
+            - var flightPrice = flightPrice.flightPrice
             include ./table.pug

@@ -48,7 +48,7 @@ switch (debugLevel) {
 }
 
 
-const client = net.createConnection({port: 8124}, () => {
+const client = net.createConnection({host: '10.38.90.100',port: 8124}, () => {
     //'connect' listener
   console.log('connected to server!');
   client.on('data', (data) => {
