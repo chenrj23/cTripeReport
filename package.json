@@ -21,6 +21,7 @@
     "moment": "^2.12.0",
     "mysql": "^2.11.1",
     "pug": "^2.0.0-beta6",
+    "redis": "^2.6.5",
     "superagent": "^1.8.3",
     "superagent-charset": "^1.1.1"
   }
