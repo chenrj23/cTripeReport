@@ -55,6 +55,19 @@ app.get('/api/byCityFromCache', function (req, res) {
 //       res.render('index', result)
 //     })
 // });
+app.get('/api/findHistory', function (req, res) {
+  let depCity = req.query.depCity
+  let arrCity = req.query.arrCity
+  let day = req.query.day
+  let timeStart = new Date()
+  logger.info('have a req from ', depCity, ' to ', arrCity)
+  cTrip.findHistory(depCity, arrCity, day)
+    .then(function(result){
+      let timeUsed = new Date() - timeStart
+      logger.info('Time use :', timeUsed)
+      res.render('byCityStopOver', result)
+    })
+});
 
 app.get('/api/byCityStopOver', function (req, res) {
   let depCity = req.query.depCity

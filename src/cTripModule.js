@@ -121,6 +121,37 @@ function distinctDepDateQueryByCity(result) {
     })
 }
 
+function findCatalogue(depCity, arrCity, day){
+  return new Promise(function(resolve, reject) {
+    let findCatalogueQueryString = `select distinct(catalogue) from flightsdata where searchTime >= '${day}' and searchTime < '${day}' + INTERVAL 1 DAY and depCity = '${depCity}' and  arrCity = '${arrCity}'`
+    logger.info(findCatalogueQueryString)
+    pool.query(findCatalogueQueryString, function(err, rows, fields){
+      if (err) throw err;
+      logger.info(rows)
+      let catalogues = rows.map(function(item, index) {
+          return item.catalogue
+      })
+      resolve(catalogues)
+    })
+  });
+}
+
+function findHistory(depCity, arrCity, day){
+  return new Promise(function(resolve, reject) {
+    findCatalogue(depCity, arrCity, day)
+    .then((catalogues)=>{
+      let findHistoryByCatalogues = catalogues.map(function(item, index){
+        return queryLongPriceByCityAtCatalogue(depCity, arrCity, item)
+      })
+      Promise.all(findHistoryByCatalogues)
+      .then(data=>{
+        dataJson = {flightsPrice: data}
+        resolve(dataJson)
+      })
+    })
+  });
+}
+
 function findTime(time, flightID, depDateTime) {
     return function(flight) {
         return flight.depDate == time && flight.flight == flightID && flight.depDateTime == depDateTime
@@ -345,8 +376,10 @@ function CTripe() {
 }
 
 CTripe.prototype.cache = cache;
+CTripe.prototype.findHistory = findHistory;
 CTripe.prototype.getFromCache = getFromCache;
 CTripe.prototype.queryStopOver = queryStopOver;
+CTripe.prototype.findCatalogue = findCatalogue;
 CTripe.prototype.queryLongPriceByCity = queryLongPriceByCity;
 CTripe.prototype.queryLongPriceByCityAtCatalogue = queryLongPriceByCityAtCatalogue;
 
