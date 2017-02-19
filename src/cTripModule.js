@@ -322,7 +322,7 @@ function queryStopOver(depCity, stopOverCity, arrCity) {
         let fSFlight = getFromCache(depCity + stopOverCity)
         let sSFlight = getFromCache(stopOverCity + arrCity)
         let longFlight = getFromCache(depCity + arrCity)
-        Promise.all([fSFlight, sSFlight, longFlight])
+        Promise.all([fSFlight, longFlight, sSFlight])
             .then(data => {
                 dataJson = {
                     flightsPrice: [
