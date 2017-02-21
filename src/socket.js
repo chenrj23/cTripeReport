@@ -56,8 +56,17 @@ myEmitter.on('request', (oneTask) => {
                 depDate,
                 depAiCode,
                 arrAirCode
-            }) =>
-            ctrip.filter(resJson, depDate, depAiCode, arrAirCode, oneTask.catalogue),
+            }) => {
+                ctrip.filter(resJson, depDate, depAiCode, arrAirCode, oneTask.catalogue)
+                    .then(({
+                        depDate,
+                        depAiCode,
+                        arrAirCode
+                    }) => {
+                        logger.info(`${depDate} from ${depAiCode} to ${arrAirCode} filter ok`)
+                    }, err => logger.error('filter err :', err))
+
+            },
             (reason) => {
                 logger.error('req have err!', reason)
                 logger.info("wait 1 min restart for request")
@@ -69,17 +78,17 @@ myEmitter.on('request', (oneTask) => {
         )
         .then(() => {
             task.nextTask()
-        },(reason)=>{
-          logger.error('filter havev err', reason)
+        }, (reason) => {
+            logger.error('filter havev err', reason)
         })
         .catch((err) => {
-          logger.errot('unexpect err!', err)
+            logger.errot('unexpect err!', err)
         })
 });
 
 myEmitter.on('cache', (oneTask) => {
     let depAirCode = oneTask.depAirCode;
-    let arrAirCode = oneTask.arrAirCode
+    let arrAirCode = oneTask.arrAirCode;
     myRedis.cache(depAirCode, arrAirCode)
     task.nextTask()
 });

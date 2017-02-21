@@ -349,7 +349,7 @@ function cache(depCity, arrCity) {
             let key = depCity.toUpperCase() + arrCity.toUpperCase()
             logger.debug('key:', key)
             client.set(key, resultString, redis.print);
-        })
+        },(err)=>logger.error('cache'))
 }
 
 function getFromCache(route) {
