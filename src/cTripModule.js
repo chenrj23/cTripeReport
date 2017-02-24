@@ -1,4 +1,5 @@
 const mysql = require('mysql');
+const moment = require('moment');
 const pool = mysql.createPool({
     connectionLimit: 10,
     host: '120.27.5.155',
@@ -113,7 +114,7 @@ function distinctDepDateQueryByCity(result) {
         pool.query(distinctDepDateQueryString, function(err, rows, fields) {
             if (err) throw err;
             let times = rows.map(function(item, index) {
-                return item.depDate
+                return moment(item.depDate).format('MM-DD')
             })
             result.depDates = times
             resolve(result)
@@ -154,7 +155,7 @@ function findHistory(depCity, arrCity, day){
 
 function findTime(time, flightID, depDateTime) {
     return function(flight) {
-        return flight.depDate == time && flight.flight == flightID && flight.depDateTime == depDateTime
+        return moment(flight.depDate).format('MM-DD') == time && flight.flight == flightID && flight.depDateTime == depDateTime
     }
 }
 
@@ -344,12 +345,12 @@ function cache(depCity, arrCity) {
         .then(function(result) {
             let timeUsed = new Date() - timeStart
             logger.info('Time use :', timeUsed)
-            // logger.debug("result", result)
+            logger.debug("result", result)
             let resultString = JSON.stringify(result)
             let key = depCity.toUpperCase() + arrCity.toUpperCase()
             logger.debug('key:', key)
             client.set(key, resultString, redis.print);
-        },(err)=>logger.error('cache'))
+        },(err)=>logger.error('cache err:', err))
 }
 
 function getFromCache(route) {
@@ -362,6 +363,7 @@ function getFromCache(route) {
                 const replyJson = JSON.parse(reply)
                 if (replyJson) {
                     replyJson.flightPrice.formatedCatalogue = new Date(parseInt(replyJson.flightPrice.catalogue))
+                    logger.debug(replyJson)
                     resolve(replyJson)
                 } else {
                     reject(new Error(`No this ${route}`))

@@ -24,6 +24,7 @@ app.get('/api/byCity', function (req, res) {
     .then(function(result){
       let timeUsed = new Date() - timeStart
       logger.info('Time use :', timeUsed)
+      // res.json(result)
       res.render('index', result)
     })
 });
@@ -35,12 +36,22 @@ app.get('/api/byCityFromCache', function (req, res) {
   logger.info('have a req from ', depCity, ' to ', arrCity)
   const route = depCity.toUpperCase() + arrCity.toUpperCase()
   cTrip.getFromCache(route)
-    .then(data=>res.render('index', data),reason=>res.end(reason))
-    .catch(err=>{
-      logger.error(err)
-      res.end(err)
-    })
+    .then(data=>res.json(data))
+    // .then(data=>res.render('index', data),reason=>res.end(reason))
+    // .catch(err=>{
+    //   logger.error(err)
+    //   res.end(err)
+    // })
 });
+app.get('/api/cache', function (req, res) {
+  let depCity = req.query.depCity
+  let arrCity = req.query.arrCity
+  let timeStart = new Date()
+  logger.info('have a req from ', depCity, ' to ', arrCity)
+  cTrip.cache(depCity, arrCity)
+  res.end('ok')
+});
+
 
 // app.get('/api/byCityAtCatalogue', function (req, res) {
 //   let depCity = req.query.depCity
