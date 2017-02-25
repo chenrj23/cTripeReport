@@ -3,6 +3,6 @@
         "routes": ["SHAHRB", "HRBSHA", "SHAKWL", "KWLSHA", "SYXSHA", "SHASYX", "SHAKWE", "KWESHA", "KWEWNZ", "WNZKWE", "SHAZUH", "ZUHSHA", "ZUHCGO", "CGOZUH", "CGOHAK", "HAKCGO", "WNZHAK", "HAKWNZ", "ZUHTNA", "TNAZUH", "SZXHET", "HETSZX", "szxhld", "hldszx", "hethld", "hldhet"],
         "seachDayLong": 30,
         "seachDayStart": "today",
-        "speed": 1200
+        "speed": 500
     }
 }

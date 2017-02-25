@@ -23,30 +23,15 @@ const depAirCode = program.depAirCode || false,
     searchDayLong = parseInt(program.searchDayLong) || 1,
     searchDefault = program.searchDefault || false,
     insist = program.insist || false,
-    speed = parseInt(program.speed) || 2000,
-    debugLevel = program.debug || 'debug';
+    speed = parseInt(program.speed) || 2000;
+    // debugLevel = program.debug || 'debug';
 
 const log4js = require('log4js');
 log4js.configure('../config/my_log4js_configuration.json')
 const logger = log4js.getLogger('client.js');
 
-switch (debugLevel) {
-    case 'debug':
-        logger.setLevel('debug');
-        break;
-    case 'info':
-        logger.setLevel('info');
-        break;
-    case 'warn':
-        logger.setLevel('warn');
-        break;
-    case 'error':
-        logger.setLevel('error');
-        break;
-    default:
-        logger.setLevel('info');
-}
-
+const logLevel = process.env.logLevel || 'info'
+logger.setLevel(logLevel);
 
 const client = net
     .createConnection({

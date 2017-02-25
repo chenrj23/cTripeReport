@@ -6,6 +6,9 @@ const log4js = require('log4js');
 log4js.configure('../config/my_log4js_configuration.json')
 const logger = log4js.getLogger('cTrip.js')
 
+const logLevel = process.env.logLevel || 'info'
+logger.setLevel(logLevel);
+
 const connectMysql = require('./connectMysql.js');
 const pool = connectMysql.pool;
 

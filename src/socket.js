@@ -1,14 +1,14 @@
 const net = require('net');
 const EventEmitter = require('events');
 const program = require('commander');
-const ctrip = require('./cTrip.js')
-const myRedis = require('./myRedis')
+const cTrip = require('./cTrip.js')
 
 const log4js = require('log4js');
 log4js.configure('../config/my_log4js_configuration.json')
 let logger = log4js.getLogger('socket.js');
 
-logger.setLevel('debug');
+const logLevel = process.env.logLevel || 'info'
+logger.setLevel(logLevel);
 
 class MyEmitter extends EventEmitter {}
 
@@ -50,14 +50,14 @@ myEmitter.on('request', (oneTask) => {
     let depDate = oneTask.depDate;
     let depAirCode = oneTask.depAirCode;
     let arrAirCode = oneTask.arrAirCode
-    ctrip.req(depDate, depAirCode, arrAirCode)
+    cTrip.req(depDate, depAirCode, arrAirCode)
         .then(({
                 resJson,
                 depDate,
                 depAiCode,
                 arrAirCode
             }) => {
-                ctrip.filter(resJson, depDate, depAiCode, arrAirCode, oneTask.catalogue)
+                cTrip.filter(resJson, depDate, depAiCode, arrAirCode, oneTask.catalogue)
                     .then(({
                         depDate,
                         depAiCode,
@@ -89,7 +89,7 @@ myEmitter.on('request', (oneTask) => {
 myEmitter.on('cache', (oneTask) => {
     let depAirCode = oneTask.depAirCode;
     let arrAirCode = oneTask.arrAirCode;
-    myRedis.cache(depAirCode, arrAirCode)
+    cTrip.cache(depAirCode, arrAirCode)
     task.nextTask()
 });
 

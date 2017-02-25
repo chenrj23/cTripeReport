@@ -5,7 +5,8 @@ const path = require('path');
 const log4js = require('log4js');
 log4js.configure('../config/my_log4js_configuration.json')
 let logger = log4js.getLogger('restful.js');
-logger.setLevel('debug');
+const logLevel = process.env.logLevel || 'info'
+logger.setLevel(logLevel);
 
 const cTrip = require('./cTripModule.js');
 
