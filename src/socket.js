@@ -2,7 +2,7 @@ const net = require('net');
 const EventEmitter = require('events');
 const program = require('commander');
 const cTrip = require('./cTrip.js')
-
+const cTripModule = require('./cTripModule.js');
 const log4js = require('log4js');
 log4js.configure('../config/my_log4js_configuration.json')
 let logger = log4js.getLogger('socket.js');
@@ -89,7 +89,7 @@ myEmitter.on('request', (oneTask) => {
 myEmitter.on('cache', (oneTask) => {
     let depAirCode = oneTask.depAirCode;
     let arrAirCode = oneTask.arrAirCode;
-    cTrip.cache(depAirCode, arrAirCode)
+    cTripModule.cache(depAirCode, arrAirCode)
     task.nextTask()
 });
 

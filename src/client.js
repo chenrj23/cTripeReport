@@ -23,7 +23,7 @@ const depAirCode = program.depAirCode || false,
     searchDayLong = parseInt(program.searchDayLong) || 1,
     searchDefault = program.searchDefault || false,
     insist = program.insist || false,
-    speed = parseInt(program.speed) || 2000;
+    speed = parseInt(program.speed) || 2000
     // debugLevel = program.debug || 'debug';
 
 const log4js = require('log4js');

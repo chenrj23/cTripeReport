@@ -8,7 +8,7 @@ let logger = log4js.getLogger('restful.js');
 const logLevel = process.env.logLevel || 'info'
 logger.setLevel(logLevel);
 
-const cTrip = require('./cTripModule.js');
+const cTripModuleModule = require('./cTripModuleModule.js');
 
 app.set('views', '../views')
 app.set('view engine', 'pug')
@@ -21,7 +21,7 @@ app.get('/api/byCity', function (req, res) {
   let timeStart = new Date()
   logger.info('have a req from ', depCity, ' to ', arrCity)
 
-  cTrip.queryLongPriceByCity(depCity, arrCity)
+  cTripModule.queryLongPriceByCity(depCity, arrCity)
     .then(function(result){
       let timeUsed = new Date() - timeStart
       logger.info('Time use :', timeUsed)
@@ -36,7 +36,7 @@ app.get('/api/byCityFromCache', function (req, res) {
   let timeStart = new Date()
   logger.info('have a req from ', depCity, ' to ', arrCity)
   const route = depCity.toUpperCase() + arrCity.toUpperCase()
-  cTrip.getFromCache(route)
+  cTripModule.getFromCache(route)
     // .then(data=>res.json(data))
     .then(data=>res.render('index', data),reason=>res.end(reason))
     .catch(err=>{
@@ -49,7 +49,7 @@ app.get('/api/cache', function (req, res) {
   let arrCity = req.query.arrCity
   let timeStart = new Date()
   logger.info('have a req from ', depCity, ' to ', arrCity)
-  cTrip.cache(depCity, arrCity)
+  cTripModule.cache(depCity, arrCity)
   res.end('ok')
 });
 
@@ -73,7 +73,7 @@ app.get('/api/findHistory', function (req, res) {
   let day = req.query.day
   let timeStart = new Date()
   logger.info('have a req from ', depCity, ' to ', arrCity)
-  cTrip.findHistory(depCity, arrCity, day)
+  cTripModule.findHistory(depCity, arrCity, day)
     .then(function(result){
       let timeUsed = new Date() - timeStart
       logger.info('Time use :', timeUsed)
@@ -87,7 +87,7 @@ app.get('/api/byCityStopOver', function (req, res) {
   let arrCity = req.query.arrCity
 
   logger.info('have a req StopOver from ', depCity, ' to ', stopOverCity , ' to ', arrCity)
-  cTrip.queryStopOver(depCity, stopOverCity, arrCity)
+  cTripModule.queryStopOver(depCity, stopOverCity, arrCity)
     .then(data=>{
       logger.info('data get')
       res.render('byCityStopOver', data)
