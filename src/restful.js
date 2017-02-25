@@ -36,12 +36,12 @@ app.get('/api/byCityFromCache', function (req, res) {
   logger.info('have a req from ', depCity, ' to ', arrCity)
   const route = depCity.toUpperCase() + arrCity.toUpperCase()
   cTrip.getFromCache(route)
-    .then(data=>res.json(data))
-    // .then(data=>res.render('index', data),reason=>res.end(reason))
-    // .catch(err=>{
-    //   logger.error(err)
-    //   res.end(err)
-    // })
+    // .then(data=>res.json(data))
+    .then(data=>res.render('index', data),reason=>res.end(reason))
+    .catch(err=>{
+      logger.error(err)
+      res.end(err)
+    })
 });
 app.get('/api/cache', function (req, res) {
   let depCity = req.query.depCity

@@ -339,18 +339,24 @@ function queryStopOver(depCity, stopOverCity, arrCity) {
 }
 
 function cache(depCity, arrCity) {
+  return  new Promise(function(resolve, reject) {
     let timeStart = new Date()
     logger.info('cacheing from ', depCity, ' to ', arrCity)
     queryLongPriceByCity(depCity, arrCity)
-        .then(function(result) {
-            let timeUsed = new Date() - timeStart
-            logger.info('Time use :', timeUsed)
-            logger.debug("result", result)
-            let resultString = JSON.stringify(result)
-            let key = depCity.toUpperCase() + arrCity.toUpperCase()
-            logger.debug('key:', key)
-            client.set(key, resultString, redis.print);
-        },(err)=>logger.error('cache err:', err))
+    .then(function(result) {
+      let queryTimeUsed = new Date() - timeStart
+      logger.info('queryTimeUsed use :', queryTimeUsed)
+      let resultString = JSON.stringify(result)
+      logger.debug("result", resultString)
+      let route = depCity.toUpperCase() + arrCity.toUpperCase()
+      logger.debug('key:', route)
+      client.set(route, resultString, redis.print);
+      let redisSetTimeUsed = new Date() - queryTimeUsed;
+      logger.info('redisSetTimeUsed:', redisSetTimeUsed)
+      resolve('redisSet OK')
+    },(err)=>logger.error('cache err:', err))
+
+  });
 }
 
 function getFromCache(route) {
