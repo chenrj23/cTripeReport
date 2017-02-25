@@ -8,7 +8,7 @@ let logger = log4js.getLogger('restful.js');
 const logLevel = process.env.logLevel || 'info'
 logger.setLevel(logLevel);
 
-const cTripModuleModule = require('./cTripModuleModule.js');
+const cTripModule = require('./cTripModule.js');
 
 app.set('views', '../views')
 app.set('view engine', 'pug')

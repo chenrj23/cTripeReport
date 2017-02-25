@@ -206,12 +206,15 @@ function longPriceQueryByCity(result) {
             let longPrices = [];
 
             result.Dows = ['', 'DOW:'];
+            let NowYear = (new Date()).getFullYear();
             for (var i = 0; i < result.depDates.length; i++) {
                 let depDate = result.depDates[i];
-                let dow = new Date(depDate).getDay();
+                let dow = new Date(`${NowYear}-${depDate}`).getDay();
                 if (dow === 0) {
                     dow = 7
                 }
+                logger.debug('depDate :', depDate)
+                logger.debug('dow: ', dow)
                 result.Dows.push(dow)
             }
 
