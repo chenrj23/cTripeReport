@@ -8,6 +8,7 @@ log4js.configure('../config/my_log4js_configuration.json')
 let logger = log4js.getLogger('socket.js');
 
 const logLevel = process.env.logLevel || 'info'
+logger.info('logLevel ', logLevel)
 logger.setLevel(logLevel);
 
 class MyEmitter extends EventEmitter {}

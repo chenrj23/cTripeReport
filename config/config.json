@@ -4,5 +4,17 @@
         "seachDayLong": 30,
         "seachDayStart": "today",
         "speed": 500
+    },
+    "specialSearch": {
+        "routes": ["TNAKWE"],
+        "seachDayLong": 2,
+        "seachDayStart": "2017-03-26",
+        "speed": 500
+    },
+    "backup": {
+        "routes": ["TNAKWE", "KWETNA", "CGODLC", "DLCCGO", "CGONGB", "NGBCGO", "SZXCGO", "CGOSZX"],
+        "seachDayLong": 2,
+        "seachDayStart": "2017-03-26",
+        "speed": 500
     }
 }
