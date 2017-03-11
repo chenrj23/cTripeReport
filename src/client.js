@@ -14,6 +14,7 @@ program
     .option('-f, --searchDefault', 'searchDefault')
     .option('-i, --insist [times]', 'search auto')
     .option('-s, --speed [times]', 'search speed')
+    .option('-z, --specialSearch', 'sepcial search')
     .option('-b, --debug [level]', '')
     .parse(process.argv);
 
@@ -23,6 +24,7 @@ const depAirCode = program.depAirCode || false,
     searchDayLong = parseInt(program.searchDayLong) || 1,
     searchDefault = program.searchDefault || false,
     insist = program.insist || false,
+    specialSearch = program.specialSearch || false,
     speed = parseInt(program.speed) || 2000
     // debugLevel = program.debug || 'debug';
 
@@ -31,6 +33,7 @@ log4js.configure('../config/my_log4js_configuration.json')
 const logger = log4js.getLogger('client.js');
 
 const logLevel = process.env.logLevel || 'info'
+logger.info('logLevel ', logLevel)
 logger.setLevel(logLevel);
 
 const client = net
@@ -41,7 +44,8 @@ const client = net
         //'connect' listener
         console.log('connected to server!');
         client.on('data', (data) => {
-            logger.info(data.toString())
+            logger.info('have data come', data.toString())
+            logger.debug('data: ', data.toString())
         });
 
         client.on('end', () => {
@@ -73,7 +77,7 @@ function tasksBuild(depAirCode, arrAirCode, depDate, speed, searchDayLong, catal
 }
 
 
-function startSearch(searchDefault) {
+function startSearch() {
     logger.info("startSearch")
 
     fs.readFile('../config/config.json', (err, data) => {
@@ -103,12 +107,47 @@ function startSearch(searchDefault) {
         logger.debug('tasksStack', tasksStack);
         client.write(tasksStack)
     });
+}
 
+function startSpecialSearch() {
 
+  logger.info("specialSearch start")
+  fs.readFile('../config/config.json', (err, data) => {
+    if (err) throw err;
+    let dataByString = data.toString()
+    let dataByJson = JSON.parse(dataByString)
+    let defaultConfig = dataByJson;
+    let specialSearch = defaultConfig.specialSearch
+
+    let catalogue = (new Date).getTime();
+    let defaultSearchRoutes = specialSearch.routes
+    let seachDayLong = specialSearch.seachDayLong
+    let seachDayStart = specialSearch.seachDayStart
+    let seachSpeed = specialSearch.speed
+    let tasksStack = []
+
+    if (seachDayStart === 'today') {
+      seachDayStart = moment().format('YYYY-MM-DD')
+    }
+    for (var i = 0; i < defaultSearchRoutes.length; i++) {
+      let depAirCode = defaultSearchRoutes[i].slice(0, 3)
+      let arrAirCode = defaultSearchRoutes[i].slice(3, 6)
+      let tasks = tasksBuild(depAirCode, arrAirCode, seachDayStart, seachSpeed, seachDayLong, catalogue)
+      tasksStack = tasksStack.concat(tasks)
+    }
+    tasksStack = JSON.stringify(tasksStack) + '\n';
+    logger.debug('tasksStack', tasksStack);
+    client.write(tasksStack)
+  });
+}
+
+if (specialSearch && !insist) {
+  startSpecialSearch()
 }
 
 
-if (searchDefault) {
+
+if (searchDefault && !insist) {
     startSearch()
 }
 
@@ -126,7 +165,13 @@ if (insist) {
     var job = new CronJob({
         cronTime: insist,
         onTick: function() {
-            startSearch(true)
+          if (searchDefault) {
+            startSearch()
+          }else if(specialSearch){
+            startSpecialSearch()
+          }else {
+            logger.info('no function')
+          }
         },
         start: false,
         timeZone: 'Asia/Shanghai'
@@ -135,6 +180,8 @@ if (insist) {
 }
 
 process.on('SIGINT', () => {
-    client.end();
-    console.log('Received SIGINT.  Press Control-D to exit.');
+    client.destroy();
+    console.log('Received SIGINT.');
+    process.exit()
+
 });
