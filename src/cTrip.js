@@ -14,6 +14,27 @@ const pool = connectMysql.pool;
 
 const requsetAgain = 3;
 
+function initreq(){
+  return new Promise(function(resolve, reject) {
+    const ctrip = request.agent()
+    ctrip.get('http://flights.ctrip.com/booking/sha-kwe-day-1.html?ddate1=2017-05-25')
+    .then((result)=>{
+      logger.debug('get cookie:', result)
+      logger.info('get cookie success!')
+      resolve(ctrip)
+    },err=>{
+      throw new Error(err)
+    })
+  });
+}
+// initreq().then(ctrip=>{
+//   console.log(ctrip);
+//   ctrip.get('http://flights.ctrip.com/domesticsearch/search/SearchFirstRouteFlights?DCity1=SHA&ACity1=KWE&SearchType=S&DDate1=2017-05-25&IsNearAirportRecommond=0&LogToken=0798b09e899d4ff087bf68ee5f4748cd&rk=5.807500556901317201250&CK=288D49CD4426E90D1B9027776BA017BA&r=0.1838802595241774862313')
+//          .then(result=>{
+//            logger.info(result)
+//          })
+// })
+
 function setSearchParam(depDate, depAiCode, arrAirCode) {
     var requestHttp = `http://flights.ctrip.com/domesticsearch/search/SearchFirstRouteFlights?DCity1=${depAiCode}&ACity1=${arrAirCode}&SearchType=S&DDate1=${depDate}&LogToken=5ef45f7846b24fd2bf41f836cdf69832&CK=A40875E7E0BFDB8E7C75AA6A038668A2&r=0.84814912185842484141`;
     logger.debug(depDate, depAiCode, arrAirCode, 'requestHttp = ', requestHttp)
@@ -27,6 +48,7 @@ function filter(resJson, depDate, depAiCode, arrAirCode, catalogue) {
 
       logger.error(depAiCode, arrAirCode, depDate, 'request error!')
       logger.error(resJson.Error)
+      logger.error('resJson:',resJson)
 
       reject(new Error(resJson.Error))
 
@@ -119,13 +141,13 @@ function filter(resJson, depDate, depAiCode, arrAirCode, catalogue) {
 }
 
 
-function req(depDate, depAiCode, arrAirCode, errCount = requsetAgain) {
+function req(agent, depDate, depAiCode, arrAirCode, errCount = requsetAgain) {
   return new Promise(function(resolve, reject) {
     logger.info(depDate, depAiCode, arrAirCode,"resquest start")
     let errHead = `${depDate} from ${depAiCode} to ${arrAirCode} `
     let searchParam = setSearchParam(depDate, depAiCode, arrAirCode);
     // logger.info(errCount)
-    request
+    agent
     .get(searchParam)
     .charset('gbk')
     .timeout(10000)
@@ -135,6 +157,7 @@ function req(depDate, depAiCode, arrAirCode, errCount = requsetAgain) {
 
         logger.error(errHead, err)
         logger.error(errHead, `errCount: `, errCount)
+        logger.error('res: ',res)
 
         if (errCount === 0) {
           logger.fatal(errHead, `request fail`)
@@ -165,5 +188,6 @@ function req(depDate, depAiCode, arrAirCode, errCount = requsetAgain) {
 
 }
 
+exports.initreq = initreq
 exports.req = req
 exports.filter = filter
