@@ -1,15 +1,15 @@
 {
     "defaultSearch": {
-        "routes": ["SHAHRB", "HRBSHA", "SHAKWL", "KWLSHA", "SYXSHA", "SHASYX", "SHAKWE", "KWESHA", "KWEWNZ", "WNZKWE", "SHAZUH", "ZUHSHA", "ZUHCGO", "CGOZUH", "CGOHAK", "HAKCGO", "WNZHAK", "HAKWNZ", "ZUHTNA", "TNAZUH", "SZXHET", "HETSZX", "szxhld", "hldszx", "hethld", "hldhet"],
+        "routes": ["SHAHRB", "HRBSHA", "SHAKWL", "KWLSHA", "SYXSHA", "SHASYX", "SHAKWE", "KWESHA", "SHAZUH", "ZUHSHA", "ZUHTNA", "TNAZUH", "SZXHET", "HETSZX", "szxhld", "hldszx", "hethld", "hldhet", "TNAKWE", "KWETNA", "CGODLC", "DLCCGO", "CGONGB", "NGBCGO", "SZXCGO", "CGOSZX"],
         "seachDayLong": 30,
         "seachDayStart": "today",
-        "speed": 500
+        "speed": 700
     },
     "specialSearch": {
-        "routes": ["TNAKWE"],
-        "seachDayLong": 2,
-        "seachDayStart": "2017-03-26",
-        "speed": 500
+        "routes": [ "SHAHRB", "HRBSHA", "SHAKWE", "KWESHA", "SHAZUH", "ZUHSHA", "ZUHTNA", "TNAZUH"],
+        "seachDayLong": 100,
+        "seachDayStart": "2017-06-10",
+        "speed": 700
     },
     "backup": {
         "routes": ["TNAKWE", "KWETNA", "CGODLC", "DLCCGO", "CGONGB", "NGBCGO", "SZXCGO", "CGOSZX"],
