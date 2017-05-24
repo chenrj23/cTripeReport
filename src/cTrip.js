@@ -19,7 +19,7 @@ function initreq(){
     const ctrip = request.agent()
     ctrip.get('http://flights.ctrip.com/booking/sha-kwe-day-1.html?ddate1=2017-05-25')
     .then((result)=>{
-      logger.debug('get cookie:', result)
+      logger.info('get cookie:', result.header['set-cookie'])
       logger.info('get cookie success!')
       resolve(ctrip)
     },err=>{
@@ -34,6 +34,15 @@ function initreq(){
 //            logger.info(result)
 //          })
 // })
+
+// request.get("http://flights.ctrip.com/domesticsearch/search/SearchFirstRouteFlights?DCity1=SHA&ACity1=KWE&SearchType=S&DDate1=2017-05-25&IsNearAirportRecommond=0&LogToken=0798b09e899d4ff087bf68ee5f4748cd&rk=5.807500556901317201250&CK=288D49CD4426E90D1B9027776BA017BA&r=0.1838802595241774862313")             //随便论坛里的一个地址
+//     .set("Cookie", '_abtest_userid=24d29c13-8fb8-42ec-95f2-95526493eedc; _RGUID=6ffa3416-2f7a-4ef5-bb98-b18066a4c388; _RSG=rxaUlO1Dw_68ECfc1OiOkB')                 //在resquest中设置得到的cookie，只设置第四个足以（具体情况具体分析）
+//         .end(function(err, res){
+//               if (err){
+//             throw err;
+//               };
+//           logger.info(res)
+//         })
 
 function setSearchParam(depDate, depAiCode, arrAirCode) {
     var requestHttp = `http://flights.ctrip.com/domesticsearch/search/SearchFirstRouteFlights?DCity1=${depAiCode}&ACity1=${arrAirCode}&SearchType=S&DDate1=${depDate}&LogToken=5ef45f7846b24fd2bf41f836cdf69832&CK=A40875E7E0BFDB8E7C75AA6A038668A2&r=0.84814912185842484141`;
@@ -141,14 +150,15 @@ function filter(resJson, depDate, depAiCode, arrAirCode, catalogue) {
 }
 
 
-function req(agent, depDate, depAiCode, arrAirCode, errCount = requsetAgain) {
+function req(depDate, depAiCode, arrAirCode, errCount = requsetAgain) {
   return new Promise(function(resolve, reject) {
     logger.info(depDate, depAiCode, arrAirCode,"resquest start")
     let errHead = `${depDate} from ${depAiCode} to ${arrAirCode} `
     let searchParam = setSearchParam(depDate, depAiCode, arrAirCode);
     // logger.info(errCount)
-    agent
+    request
     .get(searchParam)
+    .set("Cookie", '_abtest_userid=24d29c13-8fb8-42ec-95f2-95526493eedc; _RGUID=6ffa3416-2f7a-4ef5-bb98-b18066a4c388; _RSG=rxaUlO1Dw_68ECfc1OiOkB') 
     .charset('gbk')
     .timeout(10000)
     .end(function(err, res) {

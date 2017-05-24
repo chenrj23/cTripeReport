@@ -47,85 +47,47 @@ TaskControl.prototype.cutExecution = function() {
 
 const task = new TaskControl();
 
-// cTrip.initreq()
-// .then(ctrip=>{
-//   myEmitter.on('request', (oneTask) => {
-//
-//     let depDate = oneTask.depDate;
-//     let depAirCode = oneTask.depAirCode;
-//     let arrAirCode = oneTask.arrAirCode
-//     cTrip.req(ctrip, depDate, depAirCode, arrAirCode)
-//     .then(({
-//       resJson,
-//       depDate,
-//       depAiCode,
-//       arrAirCode
-//     }) => {
-//       cTrip.filter(resJson, depDate, depAiCode, arrAirCode, oneTask.catalogue)
-//       .then(({
-//         depDate,
-//         depAiCode,
-//         arrAirCode
-//       }) => {
-//         logger.info(`${depDate} from ${depAiCode} to ${arrAirCode} filter ok`)
-//       }, err => logger.error('filter err :', err))
-//
-//     },
-//     (reason) => {
-//       logger.error('req have err!', reason)
-//       logger.info("wait 1 min restart for request")
-//       setTimeout(() => {
-//         logger.info("now after 1 min restart request")
-//         task.nextTask()
-//       }, 60000)
-//     }
-//   )
-//   .then(() => {
-//     task.nextTask()
-//   }, (reason) => {
-//     logger.error('filter havev err', reason)
-//   })
-//   .catch((err) => {
-//     logger.errot('unexpect err!', err)
-//   })
-// });
-//
-//
-// })
+myEmitter.on('request', (oneTask) => {
 
-cTrip.initreq()
-.then(ctrip=>{
-  console.log('initreq after');
-    cTrip.req(ctrip, '2017-05-30', 'SHA', 'KWE')
+  let depDate = oneTask.depDate;
+  let depAirCode = oneTask.depAirCode;
+  let arrAirCode = oneTask.arrAirCode
+  cTrip.req(depDate, depAirCode, arrAirCode)
+  .then(({
+    resJson,
+    depDate,
+    depAiCode,
+    arrAirCode
+  }) => {
+    cTrip.filter(resJson, depDate, depAiCode, arrAirCode, oneTask.catalogue)
     .then(({
-      resJson,
       depDate,
       depAiCode,
       arrAirCode
     }) => {
-      console.log('after req resJson:', resJson);
-      cTrip.filter(resJson, depDate, depAiCode, arrAirCode, oneTask.catalogue)
-      .then(({
-        depDate,
-        depAiCode,
-        arrAirCode
-      }) => {
-        logger.info(`${depDate} from ${depAiCode} to ${arrAirCode} filter ok`)
-      }, err => logger.error('filter err :', err))
+      logger.info(`${depDate} from ${depAiCode} to ${arrAirCode} filter ok`)
+    }, err => logger.error('filter err :', err))
 
-    },
-    (reason) => {
-      logger.error('req have err!', reason)
-      logger.info("wait 1 min restart for request")
-      setTimeout(() => {
-        logger.info("now after 1 min restart request")
-        task.nextTask()
-      }, 60000)
-    }
-  )
-
-
+  },
+  (reason) => {
+    logger.error('req have err!', reason)
+    logger.info("wait 1 min restart for request")
+    setTimeout(() => {
+      logger.info("now after 1 min restart request")
+      task.nextTask()
+    }, 60000)
+  }
+)
+.then(() => {
+  task.nextTask()
+}, (reason) => {
+  logger.error('filter havev err', reason)
 })
+.catch((err) => {
+  logger.errot('unexpect err!', err)
+})
+});
+
 
 myEmitter.on('cache', (oneTask) => {
     let depAirCode = oneTask.depAirCode;
