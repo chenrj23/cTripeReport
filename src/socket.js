@@ -32,6 +32,8 @@ TaskControl.prototype.nextTask = function(speed) {
         this.cutExecution();
     } else {
         logger.info('no tasks')
+        logger.info('tasks:', this.tasks)
+        logger.info('execution:', this.execution)
         this.cutExecution();
     }
 }
@@ -72,10 +74,8 @@ myEmitter.on('request', (oneTask) => {
   (reason) => {
     logger.error('req have err!', reason)
     logger.info("wait 1 min restart for request")
-    setTimeout(() => {
-      logger.info("now after 1 min restart request")
-      task.nextTask()
-    }, 60000)
+    oneTask.speed = 60000
+    task.tasks.unshift(oneTask)
   }
 )
 .then(() => {

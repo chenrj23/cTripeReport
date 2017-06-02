@@ -14,6 +14,10 @@ const client = redis.createClient({
     password: 'Y8kyscsy'
 });
 
+client.on('error', function(err){
+  console.error('Redis error:', err);
+});
+
 const log4js = require('log4js');
 log4js.configure('../config/my_log4js_configuration.json')
 let logger = log4js.getLogger('cTripModule.js');
